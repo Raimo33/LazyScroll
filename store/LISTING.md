@@ -16,7 +16,7 @@ Scroll any page by looking at its top or bottom edge, and like posts on X by smi
 
 **Description:**
 
-> Browse hands-free. 100% LOCAL: everything runs on your computer, nothing is ever sent to a server.
+> Browse hands-free. It runs entirely on your computer: nothing is ever sent to a server.
 >
 > • Look at the bottom of any page and it scrolls down. Look at the top and it scrolls up. The closer to the
 >   edge, the faster. Works on regular pages and on apps that scroll an inner panel.
@@ -25,7 +25,7 @@ Scroll any page by looking at its top or bottom edge, and like posts on X by smi
 > Reading the middle of the page does nothing, and neither does glancing away, at your keyboard, or to the side,
 > so it only moves when you mean it to. A quick 20-second calibration teaches LazyScroll your face and screen.
 >
-> RUNS LOCALLY, private by design: face tracking runs entirely on your computer with a model bundled in the
+> Private by design and runs locally: face tracking runs entirely on your computer with a model bundled in the
 > extension, with no cloud and no internet connection needed for tracking. No video, images or data ever leave your device. No account, no servers, no tracking.
 >
 > Features
