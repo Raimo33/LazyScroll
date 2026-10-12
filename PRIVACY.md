@@ -1,5 +1,7 @@
 # LazyScroll privacy policy
 
+Also published at https://raimo33.github.io/LazyScroll/privacy/
+
 _Last updated: 12 October 2026_
 
 LazyScroll uses your webcam to estimate where you are looking and whether you are smiling, so it can scroll web

@@ -79,8 +79,8 @@ memory on the device and discarded.
 
 Then tick all three certifications (no selling data, no unrelated use, no creditworthiness use).
 
-**Privacy policy URL:** https://github.com/Raimo33/LazyScroll/blob/HEAD/PRIVACY.md (`HEAD` always points at the
-repository's default branch).
+**Privacy policy URL:** https://raimo33.github.io/LazyScroll/privacy/ (published from `site/` by the Pages
+workflow; keep it in sync with `PRIVACY.md`).
 
 ## Distribution tab
 
