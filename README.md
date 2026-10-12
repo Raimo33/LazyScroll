@@ -3,7 +3,7 @@
 Hands-free browsing in Chrome:
 
 - **Look at the bottom of any page → it scrolls down. Look at the top → it scrolls up.**
-- **On X, smile at a post → it gets liked. Make a sad face 😞 → it gets unliked.**
+- **On X, smile at a post → it gets liked. Make a sad face → it gets unliked.**
 
 Everything runs on your computer. The webcam feed goes into Google's MediaPipe face tracker inside the extension.
 No frames are stored or sent anywhere, there's no API key, and there are no network requests at all.

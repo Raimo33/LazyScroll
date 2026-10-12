@@ -184,7 +184,7 @@ async function calibrate() {
     text.textContent = 'Look at the dot and give a slight, natural smile.';
     const smiling = await collect(900, 1300);
 
-    text.textContent = 'Relax… now make a sad face 😞 (pull the corners of your mouth down).';
+    text.textContent = 'Relax… now make a sad face (pull the corners of your mouth down).';
     await collect(900, 0); // let the smile fade first
     const frowning = await collect(700, 1300);
 

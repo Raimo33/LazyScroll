@@ -5,7 +5,7 @@ globalThis.LAZYSCROLL_DEFAULTS = {
   enabled: true,
   disabledSites: [],      // hostnames where LazyScroll stays off
   likeOnSmile: true,      // only on sites with a like adapter (currently X)
-  unlikeOnFrown: true,    // a sad face 😞 on a liked post unlikes it
+  unlikeOnFrown: true,    // a sad face on a liked post unlikes it
   scrollWithGaze: true,
   showHud: true,
   debugGaze: false,       // draw the estimated gaze point on the page

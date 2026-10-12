@@ -432,7 +432,7 @@
     else if (paused) { dot = 'warn'; label = { typing: 'Paused while typing', fullscreen: 'Paused (fullscreen)', dialog: 'Paused' }[paused]; }
     else if (settings.scrollWithGaze && !settings.gazeModel) { dot = 'warn'; label = 'Calibrate to scroll: click'; }
     else { dot = 'ok'; label = velocity > 0 ? 'Scrolling ↓' : velocity < 0 ? 'Scrolling ↑'
-      : focusedState() === 'liked' ? (settings.unlikeOnFrown ? 'Liked · 😞 to undo' : 'Liked')
+      : focusedState() === 'liked' ? (settings.unlikeOnFrown ? 'Liked · frown to undo' : 'Liked')
       : focusedState() === 'unliked' ? 'Unliked' : 'Watching'; }
 
     $('.dot').className = `dot ${dot}`;
