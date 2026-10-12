@@ -1,7 +1,7 @@
 # Chrome Web Store submission kit
 
-Everything to paste into the Developer Dashboard. Upload `dist/lazyscroll-<version>.zip` (build it with
-`npm run package`).
+Everything to paste into the Developer Dashboard. Upload `lazyscroll-<version>.zip` from the
+[latest GitHub release](https://github.com/Raimo33/LazyScroll/releases), or build it locally with `npm run package`.
 
 ## Store listing tab
 
@@ -68,8 +68,8 @@ memory on the device and discarded.
 
 Then tick all three certifications (no selling data, no unrelated use, no creditworthiness use).
 
-**Privacy policy URL:** https://github.com/Raimo33/LazyScroll/blob/main/PRIVACY.md (this file must be on `main`
-before you submit).
+**Privacy policy URL:** https://github.com/Raimo33/LazyScroll/blob/HEAD/PRIVACY.md (`HEAD` always points at the
+repository's default branch).
 
 ## Distribution tab
 
