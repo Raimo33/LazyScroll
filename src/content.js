@@ -181,6 +181,7 @@
     if (port || !active()) return;
     port = chrome.runtime.connect({ name: 'lazyscroll-sensor' });
     port.onMessage.addListener(onSensor);
+    syncPreview();
     port.onDisconnect.addListener(() => {
       port = null;
       velocity = 0;
@@ -199,7 +200,16 @@
     gaze.reset();
   }
 
+  function syncPreview() {
+    try { port?.postMessage({ type: 'preview', on: !!settings.cameraBubble }); } catch {}
+  }
+
   function onSensor(msg) {
+    if (msg.type === 'preview') {
+      bubbleImg.src = msg.image;
+      bubbleFace = msg.face;
+      return renderHud();
+    }
     if (msg.type === 'status') {
       sensor = msg;
       return renderHud();
@@ -276,6 +286,18 @@
       .band { position: fixed; left: 0; right: 0; z-index: 2147483646; pointer-events: none; background: rgba(29,155,240,.06); }
       .band.top { top: 0; border-bottom: 1px dashed rgba(29,155,240,.5); }
       .band.bottom { bottom: 0; border-top: 1px dashed rgba(29,155,240,.5); }
+      .bubble { position: fixed; z-index: 2147483647; box-sizing: border-box; width: 112px; height: 112px; border-radius: 50%; overflow: hidden;
+        background: #0f1419; border: 3px solid rgba(231,233,234,.85); box-shadow: 0 6px 20px rgba(0,0,0,.35);
+        cursor: grab; touch-action: none; user-select: none; transition: border-color .15s, box-shadow .15s; }
+      .bubble.dragging { cursor: grabbing; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+      .bubble.scrolling { border-color: #1d9bf0; box-shadow: 0 0 0 4px rgba(29,155,240,.35), 0 6px 20px rgba(0,0,0,.35); }
+      .bubble.liked { border-color: #00ba7c; }
+      .bubble.noface { border-color: #8b98a5; }
+      .bubble img { width: 100%; height: 100%; display: block; pointer-events: none; -webkit-user-drag: none; }
+      .bubble .close { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border: 0; border-radius: 50%;
+        background: rgba(15,20,25,.8); color: #e7e9ea; font: 15px/22px system-ui, sans-serif; text-align: center; padding: 0;
+        cursor: pointer; opacity: 0; transition: opacity .15s; }
+      .bubble:hover .close { opacity: 1; }
       [hidden] { display: none !important; }
     </style>
     <div class="hud" title="LazyScroll: click for settings">
@@ -286,11 +308,61 @@
       <span class="fps muted"></span>
     </div>
     <div class="band top" hidden></div><div class="band bottom" hidden></div>
-    <div class="gdot" hidden></div>`;
+    <div class="gdot" hidden></div>
+    <div class="bubble" hidden title="LazyScroll camera: drag to move"><img alt=""><button class="close" title="Hide camera bubble">×</button></div>`;
   const $ = (s) => shadow.querySelector(s);
   $('.hud').addEventListener('click', () => {
     if (alive()) chrome.runtime.sendMessage({ to: 'background', type: 'open-settings' });
   });
+
+  // ---------- camera bubble ----------
+
+  const bubble = $('.bubble');
+  const bubbleImg = $('.bubble img');
+  let bubbleFace = false;
+  let drag = null;
+  const BUBBLE = 112, MARGIN = 12;
+
+  function placeBubble(cx, cy) {
+    const half = BUBBLE / 2;
+    cx = Math.max(half + 4, Math.min(innerWidth - half - 4, cx));
+    cy = Math.max(half + 4, Math.min(innerHeight - half - 4, cy));
+    bubble.style.left = `${cx - half}px`;
+    bubble.style.top = `${cy - half}px`;
+    return { cx, cy };
+  }
+
+  function placeBubbleFromSettings() {
+    const pos = settings.bubblePos;
+    if (pos) placeBubble(pos.x * innerWidth, pos.y * innerHeight);
+    else placeBubble(innerWidth - BUBBLE / 2 - MARGIN - 8, innerHeight - BUBBLE / 2 - MARGIN - 8);
+  }
+
+  bubble.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.close')) return;
+    const r = bubble.getBoundingClientRect();
+    drag = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
+    bubble.setPointerCapture(e.pointerId);
+    bubble.classList.add('dragging');
+    e.preventDefault();
+  });
+  bubble.addEventListener('pointermove', (e) => {
+    if (drag) placeBubble(e.clientX - drag.dx, e.clientY - drag.dy);
+  });
+  const endDrag = (e) => {
+    if (!drag) return;
+    const { cx, cy } = placeBubble(e.clientX - drag.dx, e.clientY - drag.dy);
+    drag = null;
+    bubble.classList.remove('dragging');
+    if (alive()) chrome.storage.local.set({ bubblePos: { x: cx / innerWidth, y: cy / innerHeight } });
+  };
+  bubble.addEventListener('pointerup', endDrag);
+  bubble.addEventListener('pointercancel', endDrag);
+  $('.bubble .close').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (alive()) chrome.storage.local.set({ cameraBubble: false });
+  });
+  addEventListener('resize', () => { if (!bubble.hidden && !drag) placeBubbleFromSettings(); });
 
   let hudRaf = 0;
   function renderHud() {
@@ -300,8 +372,16 @@
   function drawHud() {
     hudRaf = 0;
     // Only on pages where LazyScroll is switched on; turning a site off makes it disappear entirely.
-    if (!settings.showHud || !wanted()) return hudHost.remove();
+    const showBubble = settings.cameraBubble && active() && sensor.state === 'running' && !!bubbleImg.src;
+    if (!wanted() || (!settings.showHud && !settings.debugGaze && !showBubble)) return hudHost.remove();
     if (!hudHost.isConnected) document.documentElement.append(hudHost);
+    $('.hud').hidden = !settings.showHud;
+
+    if (bubble.hidden && showBubble) placeBubbleFromSettings();
+    bubble.hidden = !showBubble;
+    if (showBubble) {
+      bubble.className = `bubble${drag ? ' dragging' : ''}${!bubbleFace ? ' noface' : velocity ? ' scrolling' : focusedState() === 'liked' ? ' liked' : ''}`;
+    }
 
     const paused = pauseReason();
     let label = 'LazyScroll', dot = '';
@@ -361,9 +441,15 @@
   }
 
   function applySettings(next) {
+    const bubbleWas = settings.cameraBubble;
     settings = { ...settings, ...next };
     smile.configure(settings);
     gaze.configure(settings);
+    if (settings.cameraBubble !== bubbleWas) {
+      syncPreview();
+      if (!settings.cameraBubble) bubbleImg.removeAttribute('src');
+    }
+    if ('bubblePos' in next && !bubble.hidden && !drag) placeBubbleFromSettings();
     refresh();
   }
 

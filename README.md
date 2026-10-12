@@ -45,7 +45,12 @@ On X:
 
 The status pill (bottom-left of each page) shows what's going on: tracking state, a smile meter and a gaze meter.
 Turn on **Debug: show where I'm looking** in the settings to draw the estimated gaze point on the page with the
-scroll bands shaded. Use it to check calibration and tune the sliders. The setup page also has a full-screen
+scroll bands shaded. Use it to check calibration and tune the sliders.
+
+**Camera bubble** (toolbar menu or settings) shows a small, draggable bubble with your camera and the tracked face
+points, mirrored like a selfie. It's made for demo recordings: since LazyScroll already owns the webcam, a plain
+screen recording (e.g. GNOME's Print Screen recorder or OBS screen capture) picks up your face too. Its border turns
+blue while scrolling, green after a like and grey when no face is found. Hover it for the × to hide it. The setup page also has a full-screen
 **Test tracking** view.
 
 ## Accuracy, honestly

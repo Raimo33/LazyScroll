@@ -145,6 +145,10 @@ async function start() {
           }
         }
         broadcast(summarize(result, t, frame.displayWidth / frame.displayHeight));
+        if (previewPorts.size && t - lastPreviewAt >= PREVIEW_INTERVAL_MS) {
+          lastPreviewAt = t;
+          sendPreview(frame, result);
+        }
       } finally {
         frame.close();
       }
@@ -180,6 +184,74 @@ function stop() {
   setStatus({ state: 'idle' });
 }
 
+// ---------- camera bubble preview ----------
+// A small mirrored, face-centred thumbnail with the tracked points drawn on, sent only to ports that ask for it.
+
+const PREVIEW_SIZE = 192;
+const PREVIEW_INTERVAL_MS = 50; // ~20 fps is plenty for a bubble
+const previewPorts = new Set();
+let lastPreviewAt = 0;
+let crop = null; // smoothed face box in frame pixels
+const previewCanvas = document.createElement('canvas');
+previewCanvas.width = previewCanvas.height = PREVIEW_SIZE;
+const pctx = previewCanvas.getContext('2d');
+
+function sendPreview(frame, result) {
+  const W = frame.displayWidth, H = frame.displayHeight;
+  const lm = result.faceLandmarks?.[0];
+
+  // Square box around the face (1.7× its size), smoothed so the bubble doesn't jitter.
+  let target;
+  if (lm) {
+    let x0 = 1, y0 = 1, x1 = 0, y1 = 0;
+    for (const p of lm) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+    const size = Math.max((x1 - x0) * W, (y1 - y0) * H) * 1.7;
+    target = { cx: ((x0 + x1) / 2) * W, cy: ((y0 + y1) / 2) * H, size };
+  } else {
+    target = crop ?? { cx: W / 2, cy: H / 2, size: Math.min(W, H) };
+  }
+  crop = crop ? {
+    cx: crop.cx + 0.3 * (target.cx - crop.cx),
+    cy: crop.cy + 0.3 * (target.cy - crop.cy),
+    size: crop.size + 0.15 * (target.size - crop.size),
+  } : target;
+  const size = Math.min(crop.size, W, H);
+  const sx = Math.max(0, Math.min(W - size, crop.cx - size / 2));
+  const sy = Math.max(0, Math.min(H - size, crop.cy - size / 2));
+  const k = PREVIEW_SIZE / size;
+
+  pctx.save();
+  // Mirror, like a selfie camera.
+  pctx.translate(PREVIEW_SIZE, 0);
+  pctx.scale(-1, 1);
+  pctx.drawImage(frame, sx, sy, size, size, 0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+  if (lm) {
+    const at = (p) => [(p.x * W - sx) * k, (p.y * H - sy) * k];
+    pctx.fillStyle = 'rgba(255,255,255,0.45)';
+    for (let i = 0; i < 468; i += 5) {
+      const [x, y] = at(lm[i]);
+      pctx.fillRect(x - 0.75, y - 0.75, 1.5, 1.5);
+    }
+    pctx.strokeStyle = '#1d9bf0';
+    pctx.lineWidth = 1.5;
+    for (const c of [468, 473]) {
+      const [x, y] = at(lm[c]);
+      const [ex] = at(lm[c + 1]);
+      pctx.beginPath();
+      pctx.arc(x, y, Math.max(2.5, Math.abs(ex - x)), 0, Math.PI * 2);
+      pctx.stroke();
+      pctx.fillStyle = '#1d9bf0';
+      pctx.fillRect(x - 1, y - 1, 2, 2);
+    }
+  }
+  pctx.restore();
+
+  const msg = { type: 'preview', face: !!lm, image: previewCanvas.toDataURL('image/jpeg', 0.72) };
+  for (const p of previewPorts) {
+    try { p.postMessage(msg); } catch { previewPorts.delete(p); }
+  }
+}
+
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== 'lazyscroll-sensor') return;
   ports.add(port);
@@ -187,10 +259,14 @@ chrome.runtime.onConnect.addListener((port) => {
   port.postMessage({ type: 'status', ...status });
   port.onDisconnect.addListener(() => {
     ports.delete(port);
+    previewPorts.delete(port);
     if (!ports.size) stopTimer = setTimeout(stop, IDLE_STOP_MS);
   });
   port.onMessage.addListener((msg) => {
     if (msg?.type === 'retry' && !running) start();
+    if (msg?.type === 'preview') {
+      if (msg.on) previewPorts.add(port); else previewPorts.delete(port);
+    }
   });
   start();
 });

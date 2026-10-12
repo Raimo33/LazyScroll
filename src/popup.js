@@ -11,6 +11,8 @@ const $ = (s) => document.querySelector(s);
 
   $('#enabled').checked = settings.enabled;
   $('#enabled').addEventListener('change', (e) => chrome.storage.local.set({ enabled: e.target.checked }));
+  $('#bubble').checked = settings.cameraBubble;
+  $('#bubble').addEventListener('change', (e) => chrome.storage.local.set({ cameraBubble: e.target.checked }));
 
   if (host) {
     $('#site-label').textContent = `On ${host.replace(/^www\./, '')}`;

@@ -67,6 +67,30 @@ try {
   console.log('after scroll, focused tweet:', await focusedIndex(), '(already liked → green)');
   assert.equal(await page.locator('article[data-lazyscroll]').count(), 1);
 
+  // Camera bubble: shows live frames, drags, remembers its position, closes from its × button.
+  await sw.evaluate(() => chrome.storage.local.set({ cameraBubble: true }));
+  const bubbleSel = '#lazyscroll-hud >> .bubble';
+  await page.waitForFunction(() => {
+    const b = document.querySelector('#lazyscroll-hud')?.shadowRoot?.querySelector('.bubble');
+    return b && !b.hidden && b.querySelector('img').src.startsWith('data:image/jpeg');
+  }, null, { timeout: 15000 });
+  const box = await page.locator(bubbleSel).boundingBox();
+  console.log('bubble: visible at', Math.round(box.x), Math.round(box.y), `${box.width}px`);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(200, 200, { steps: 8 });
+  await page.mouse.up();
+  const moved = await page.locator(bubbleSel).boundingBox();
+  assert.ok(Math.abs(moved.x + moved.width / 2 - 200) < 3 && Math.abs(moved.y + moved.height / 2 - 200) < 3, JSON.stringify(moved));
+  const { bubblePos } = await sw.evaluate(() => chrome.storage.local.get('bubblePos'));
+  assert.ok(bubblePos && bubblePos.x > 0 && bubblePos.y > 0);
+  console.log('bubble: dragged to 200,200, saved', JSON.stringify(bubblePos));
+  await page.locator(bubbleSel).hover();
+  await page.locator('#lazyscroll-hud >> .bubble .close').click();
+  await page.waitForFunction(() => document.querySelector('#lazyscroll-hud')?.shadowRoot?.querySelector('.bubble').hidden, null, { timeout: 5000 });
+  assert.equal((await sw.evaluate(() => chrome.storage.local.get('cameraBubble'))).cameraBubble, false);
+  console.log('bubble: closed with ×');
+
   // Any other site: scrolling runs (status pill connected to the sensor), but no post highlight.
   await ctx.route('https://example.com/**', (route) => route.fulfill({ contentType: 'text/html',
     body: '<!doctype html><div id="pane" style="height:300px;overflow:auto"><div style="height:3000px">long</div></div>' }));

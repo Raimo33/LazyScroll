@@ -8,6 +8,8 @@ globalThis.LAZYSCROLL_DEFAULTS = {
   scrollWithGaze: true,
   showHud: true,
   debugGaze: false,       // draw the estimated gaze point on the page
+  cameraBubble: false,    // small draggable camera preview on pages (handy for demo recordings)
+  bubblePos: null,        // { x, y } of the bubble's centre as fractions of the window; null = bottom-right
 
   // Smile → like
   smileThreshold: 0.15,   // rise in smile score (0–1) over the per-tweet baseline that counts as a smile
