@@ -1,9 +1,9 @@
 # LazyScroll
 
-Hands-free X (Twitter) in Chrome:
+Hands-free browsing in Chrome:
 
-- **Look at the bottom of the page → it scrolls down. Look at the top → it scrolls up.**
-- **Smile at a tweet → it gets liked.**
+- **Look at the bottom of any page → it scrolls down. Look at the top → it scrolls up.**
+- **On X, smile at a post → it gets liked.**
 
 Everything runs on your computer. The webcam feed goes into Google's MediaPipe face tracker inside the extension.
 No frames are stored or sent anywhere, there's no API key, and there are no network requests at all.
@@ -16,7 +16,8 @@ From the Chrome Web Store once it's published. Until then, or for development:
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, pick the repo folder.
 3. The setup page opens: allow the camera, then run the 20-second **calibration**. Gaze scrolling stays off until
    you've calibrated.
-4. Open x.com. The toolbar button turns LazyScroll on and off; the setup page is under the extension's **Options**.
+4. Browse. The toolbar button opens a small menu to switch LazyScroll off everywhere or just for the current site,
+   and to reach settings and calibration.
 
 ## How it behaves
 
@@ -29,14 +30,20 @@ From the Chrome Web Store once it's published. Until then, or for development:
 
 - Scrolling starts after you've looked into a band for ~220 ms (blinks and glances don't count), and stops as soon
   as your gaze comes back towards the middle.
-- The tweet that would get liked has a coloured outline: **blue** while LazyScroll reads your resting face,
+- It scrolls whatever is under your gaze: the page itself, or an inner panel in apps like Gmail or Slack.
+- It only tracks the focused browser window (no scrolling while you work in another app) and pauses while you type
+  or watch something fullscreen. The camera turns off shortly after the window loses focus.
+
+On X:
+
+- The post that would get liked has a coloured outline: **blue** while LazyScroll reads your resting face,
   **yellow** while it watches for a smile, **green** once liked. It's the tweet crossing the middle of the screen.
   Nothing gets liked while the page is scrolling.
 - A smile only counts if it **rises** above your face's resting level on that tweet and holds for ~120 ms, so
   being already amused when a tweet arrives doesn't like it, and one noisy frame doesn't either.
-- Everything pauses while you're typing or a dialog (photo viewer, compose box) is open.
+- Liking pauses while a dialog (photo viewer, composer) is open.
 
-The status pill (bottom-left on x.com) shows what's going on: tracking state, a smile meter and a gaze meter.
+The status pill (bottom-left of each page) shows what's going on: tracking state, a smile meter and a gaze meter.
 Turn on **Debug: show where I'm looking** in the settings to draw the estimated gaze point on the page with the
 scroll bands shaded. Use it to check calibration and tune the sliders. The setup page also has a full-screen
 **Test tracking** view.
@@ -57,9 +64,9 @@ keyboard", but not fine enough to tell which line of a tweet you're on. What hel
 ## How it works
 
 ```
-offscreen page (src/offscreen.js)          content script on x.com (src/content.js)
+offscreen page (src/offscreen.js)          content script on every page (src/content.js)
   webcam 1280×720 → MediaPipe Face Landmarker   ← frame summaries over a port, ~30/s
-  478 landmarks + 52 blendshapes + head pose    → smile detector → click ♥ on the focused tweet
+  478 landmarks + 52 blendshapes + head pose    → smile detector → site adapter (X) → click ♥
   → iris-in-eye position, eyelid opening,       → gaze model → One-Euro filter → zones → scroll
     eye blendshapes, head pitch/yaw/position
 ```
@@ -69,7 +76,10 @@ offscreen page (src/offscreen.js)          content script on x.com (src/content.
 - **Latency:** the camera stays warm while x.com is in front, every camera frame is processed
   (`MediaStreamTrackProcessor` with a 1-frame buffer, so there's never a backlog), and inference takes a few
   milliseconds on the GPU. Smile-to-like is about 150–250 ms end to end, mostly the 120 ms hold.
-- The camera turns off 15 s after you leave x.com or switch tabs.
+- The camera turns off 15 s after no focused page needs it.
+
+Liking is done by small per-site adapters at the top of `src/content.js` (find posts, tell if liked, click like).
+X is the only one so far; adding another site is a few lines.
 
 ## Development
 
@@ -89,7 +99,7 @@ answers and graphics. Bump `version` in `manifest.json` for every upload.
 `vendor/mediapipe/` is `@mediapipe/tasks-vision@1.1.0` (SIMD wasm only) and the float16 `face_landmarker.task`
 model, both Apache-2.0, bundled because Manifest V3 doesn't allow remotely loaded code.
 
-X selectors used: `article[data-testid="tweet"]`, `[data-testid="like"]` / `[data-testid="unlike"]`. If X changes
+X adapter selectors: `article[data-testid="tweet"]`, `[data-testid="like"]` / `[data-testid="unlike"]`. If X changes
 them, that's where to look.
 
 Automated liking is technically against X's automation rules. At the pace of one human smiling it's very

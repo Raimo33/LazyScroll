@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LazyScroll</title>
+  <link rel="stylesheet" href="welcome.css">
+  <style>
+    body { width: 280px; }
+    main { padding: 14px 16px; display: grid; gap: 12px; }
+    h1 { font-size: 16px; margin: 0; display: flex; align-items: center; gap: 8px; }
+    h1 img { width: 20px; height: 20px; }
+    .switch { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .switch span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .note { font-size: 12px; margin: 0; }
+    button { width: 100%; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1><img src="../icons/icon32.png" alt="">LazyScroll</h1>
+    <label class="switch"><span>On</span><input type="checkbox" id="enabled"></label>
+    <label class="switch" id="site-row"><span id="site-label">On this site</span><input type="checkbox" id="site"></label>
+    <p class="note muted" id="note"></p>
+    <button id="settings">Settings &amp; calibration</button>
+  </main>
+  <script src="shared.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

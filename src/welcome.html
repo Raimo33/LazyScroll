@@ -10,8 +10,8 @@
   <main>
     <header>
       <h1>LazyScroll</h1>
-      <p class="lede">Look down to scroll down, look up to scroll up, smile to like the tweet you're reading.
-        Face tracking runs entirely on this computer; no images leave it.</p>
+      <p class="lede">Look at the bottom of any page to scroll down, the top to scroll up. On X, smile to like the post
+        you're reading. Face tracking runs entirely on this computer; no images leave it.</p>
     </header>
 
     <section class="step" id="step-camera">
@@ -35,7 +35,8 @@
 
     <section class="step" id="step-settings">
       <h2><span class="num">3</span> Settings</h2>
-      <p class="muted">Changes apply instantly. Open x.com when you're ready; the toolbar button turns LazyScroll on and off.</p>
+      <p class="muted">Changes apply instantly. The toolbar button turns LazyScroll on and off, everywhere or just for the current site.
+        It only tracks while the browser window is focused, and pauses while you type.</p>
 
       <div class="live" id="live">
         <div class="live-row"><span>Smile</span><span class="bar"><i id="live-smile"></i><b id="live-smile-thr"></b></span><span id="live-smile-num" class="num-cell"></span></div>
@@ -46,9 +47,9 @@
       <form id="settings">
         <label class="toggle"><input type="checkbox" name="enabled"> Enabled</label>
         <label class="toggle"><input type="checkbox" name="scrollWithGaze"> Scroll with my eyes</label>
-        <label class="toggle"><input type="checkbox" name="likeOnSmile"> Like when I smile</label>
-        <label class="toggle"><input type="checkbox" name="showHud"> Show status pill on x.com</label>
-        <label class="toggle"><input type="checkbox" name="debugGaze"> Debug: show where I'm looking on x.com</label>
+        <label class="toggle"><input type="checkbox" name="likeOnSmile"> Like posts on X when I smile</label>
+        <label class="toggle"><input type="checkbox" name="showHud"> Show status pill on pages</label>
+        <label class="toggle"><input type="checkbox" name="debugGaze"> Debug: show where I'm looking on pages</label>
 
         <label class="range"><span>Smile sensitivity <small>(lower = slighter smiles count)</small></span>
           <input type="range" name="smileThreshold" min="0.03" max="0.5" step="0.01"><output></output></label>

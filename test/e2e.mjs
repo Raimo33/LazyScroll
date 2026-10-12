@@ -58,14 +58,37 @@ try {
   console.log('focused tweet:', await focusedIndex(), await page.getAttribute('article[data-lazyscroll]', 'data-lazyscroll'));
 
   // The content script is connected to the sensor: its status pill reports the (faceless) camera feed.
-  await page.waitForFunction(() => /No face/.test(document.querySelector('html > div')?.shadowRoot?.querySelector('.label')?.textContent), null, { timeout: 15000 });
-  console.log('status pill:', await page.evaluate(() => document.querySelector('html > div').shadowRoot.querySelector('.label').textContent));
+  await page.waitForFunction(() => /No face/.test(document.querySelector('#lazyscroll-hud')?.shadowRoot?.querySelector('.label')?.textContent), null, { timeout: 15000 });
+  console.log('status pill:', await page.evaluate(() => document.querySelector('#lazyscroll-hud').shadowRoot.querySelector('.label').textContent));
 
   // Scrolling moves the highlight; an already-liked tweet shows as liked.
   await page.evaluate(() => scrollTo(0, 3 * 261 - innerHeight / 2 + 130));
   await page.waitForFunction(() => document.querySelectorAll('article')[3].dataset.lazyscroll === 'liked', null, { timeout: 5000 });
   console.log('after scroll, focused tweet:', await focusedIndex(), '(already liked → green)');
   assert.equal(await page.locator('article[data-lazyscroll]').count(), 1);
+
+  // Any other site: scrolling runs (status pill connected to the sensor), but no post highlight.
+  await ctx.route('https://example.com/**', (route) => route.fulfill({ contentType: 'text/html',
+    body: '<!doctype html><div id="pane" style="height:300px;overflow:auto"><div style="height:3000px">long</div></div>' }));
+  const other = await ctx.newPage();
+  other.on('pageerror', (e) => errors.push(e.message));
+  await other.goto('https://example.com/');
+  await other.waitForFunction(() => /No face/.test(document.querySelector('#lazyscroll-hud')?.shadowRoot?.querySelector('.label')?.textContent), null, { timeout: 15000 });
+  assert.equal(await other.locator('[data-lazyscroll]').count(), 0);
+  console.log('other site: status pill connected, no like highlight');
+
+  // Switching a single site off removes LazyScroll there only.
+  await sw.evaluate(() => chrome.storage.local.set({ disabledSites: ['example.com'] }));
+  await other.waitForFunction(() => !document.querySelector('#lazyscroll-hud'), null, { timeout: 5000 });
+  assert.ok(await page.locator('#lazyscroll-hud').count() === 1, 'x.com should be unaffected');
+  console.log('site disabled: pill gone on example.com, still on x.com');
+
+  // The toolbar popup renders.
+  const popup = await ctx.newPage();
+  popup.on('pageerror', (e) => errors.push(e.message));
+  await popup.goto(`chrome-extension://${id}/src/popup.html`);
+  await popup.waitForSelector('#enabled');
+  console.log('popup:', (await popup.textContent('main')).replace(/\s+/g, ' ').trim());
 
   // Toolbar toggle turns it off and removes the highlight.
   await sw.evaluate(() => chrome.storage.local.set({ enabled: false }));

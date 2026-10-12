@@ -3,7 +3,8 @@
 
 globalThis.LAZYSCROLL_DEFAULTS = {
   enabled: true,
-  likeOnSmile: true,
+  disabledSites: [],      // hostnames where LazyScroll stays off
+  likeOnSmile: true,      // only on sites with a like adapter (currently X)
   scrollWithGaze: true,
   showHud: true,
   debugGaze: false,       // draw the estimated gaze point on the page

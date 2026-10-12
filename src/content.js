@@ -1,29 +1,48 @@
 (() => {
+  // Avoid double injection (e.g. extension reloaded while the page stays open).
+  if (window.__lazyscroll) return;
+  window.__lazyscroll = true;
+
   let settings = { ...LAZYSCROLL_DEFAULTS };
   const smile = new SmileDetector(settings);
   const gaze = new GazeScroller(settings);
+  const host = location.hostname;
 
-  // ---------- focused tweet ----------
+  // ---------- site adapters (smile → like) ----------
+  // Scrolling works on every page. Liking needs to know a site's markup, so it only runs where an adapter exists.
+
+  const ADAPTERS = [
+    {
+      name: 'X',
+      match: /(^|\.)(x|twitter)\.com$/,
+      posts: () => document.querySelectorAll('article[data-testid="tweet"]'),
+      isLiked: (post) => !!post.querySelector('[data-testid="unlike"]'),
+      like: (post) => {
+        const btn = post.querySelector('[data-testid="like"]');
+        btn?.click();
+        return !!btn;
+      },
+      // X opens photos, the composer, etc. in modal dialogs; don't act behind them.
+      blocked: () => !!document.querySelector('[aria-modal="true"]'),
+    },
+  ];
+  const adapter = ADAPTERS.find((a) => a.match.test(host)) ?? null;
+
+  // ---------- focused post ----------
 
   let focused = null;
 
-  function focusedState() {
-    return focused?.dataset.lazyscroll;
+  const focusedState = () => focused?.dataset.lazyscroll;
+
+  function setState(post, state) {
+    if (post && post === focused) post.dataset.lazyscroll = state;
   }
 
-  function setState(article, state) {
-    if (article && article === focused) article.dataset.lazyscroll = state;
-  }
-
-  function isLiked(article) {
-    return !!article.querySelector('[data-testid="unlike"]');
-  }
-
-  // The tweet crossing the vertical middle of the viewport, else the nearest one to it.
+  // The post crossing the vertical middle of the viewport, else the nearest one to it.
   function pickFocused() {
     const mid = innerHeight / 2;
     let best = null, bestDist = Infinity;
-    for (const a of document.querySelectorAll('article[data-testid="tweet"]')) {
+    for (const a of adapter.posts()) {
       const r = a.getBoundingClientRect();
       if (r.bottom < 0 || r.top > innerHeight) continue;
       const d = r.top <= mid && r.bottom >= mid ? 0 : Math.min(Math.abs(r.top - mid), Math.abs(r.bottom - mid));
@@ -33,28 +52,23 @@
   }
 
   function updateFocus() {
-    const next = active() && settings.likeOnSmile ? pickFocused() : null;
+    const next = adapter && active() && settings.likeOnSmile ? pickFocused() : null;
     if (next === focused) return;
     focused?.removeAttribute('data-lazyscroll');
     focused = next;
     smile.reset();
-    if (focused) focused.dataset.lazyscroll = isLiked(focused) ? 'liked' : 'baseline';
+    if (focused) focused.dataset.lazyscroll = adapter.isLiked(focused) ? 'liked' : 'baseline';
   }
 
-  let focusRaf = 0;
-  const scheduleFocus = () => {
-    if (!focusRaf) focusRaf = requestAnimationFrame(() => { focusRaf = 0; updateFocus(); });
-  };
-  addEventListener('scroll', scheduleFocus, { passive: true });
-  addEventListener('resize', scheduleFocus);
-  // X recycles tweet nodes while you scroll, so re-check whenever the timeline DOM changes.
-  new MutationObserver(scheduleFocus).observe(document.body, { childList: true, subtree: true });
-
-  function like(article) {
-    const btn = article.querySelector('[data-testid="like"]');
-    if (!btn) return false;
-    btn.click();
-    return true;
+  if (adapter) {
+    let focusRaf = 0;
+    const scheduleFocus = () => {
+      if (!focusRaf) focusRaf = requestAnimationFrame(() => { focusRaf = 0; updateFocus(); });
+    };
+    addEventListener('scroll', scheduleFocus, { passive: true, capture: true });
+    addEventListener('resize', scheduleFocus);
+    // Sites like X recycle post nodes while you scroll, so re-check whenever the DOM changes.
+    new MutationObserver(scheduleFocus).observe(document.body, { childList: true, subtree: true });
   }
 
   // ---------- scrolling ----------
@@ -63,14 +77,53 @@
   let lastFrameAt = 0;
   let scrollRaf = 0;
   let lastTick = 0;
+  let scroller = null;   // element being scrolled, chosen when a scroll starts
+  let carry = 0;         // sub-pixel remainder, so slow scrolls don't get rounded away
+
+  function canScrollY(el) {
+    if (el.scrollHeight <= el.clientHeight + 1) return false;
+    const oy = getComputedStyle(el).overflowY;
+    return oy === 'auto' || oy === 'scroll' || oy === 'overlay';
+  }
+
+  // Many apps scroll an inner panel rather than the page. Scroll whatever is under the gaze
+  // (falling back to the middle of the window), walking up until something can actually scroll.
+  function findScroller() {
+    const page = gaze.lastPage;
+    const x = page ? Math.max(1, Math.min(innerWidth - 2, ((page.x + 1) / 2) * innerWidth)) : innerWidth / 2;
+    for (const px of [x, innerWidth / 2]) {
+      let el = document.elementFromPoint(px, innerHeight / 2);
+      while (el && el !== document.body && el !== document.documentElement) {
+        if (canScrollY(el)) return el;
+        el = el.parentElement;
+      }
+    }
+    return document.scrollingElement || document.documentElement;
+  }
 
   function scrollTick(now) {
     // Sensor went quiet (tab hidden, camera stopped): never keep scrolling blind.
     if (now - lastFrameAt > 300) velocity = 0;
-    if (!velocity) { scrollRaf = 0; return; }
+    if (!velocity) {
+      scrollRaf = 0;
+      scroller = null;
+      carry = 0;
+      return;
+    }
     const dt = Math.min(50, now - lastTick);
     lastTick = now;
-    scrollBy(0, (velocity * dt) / 1000);
+    carry += (velocity * dt) / 1000;
+    const step = Math.trunc(carry);
+    if (step) {
+      carry -= step;
+      scroller ??= findScroller();
+      // 'instant' so sites with `scroll-behavior: smooth` don't queue up an animation per frame.
+      if (scroller === document.scrollingElement || scroller === document.documentElement) {
+        window.scrollBy({ top: step, behavior: 'instant' });
+      } else {
+        scroller.scrollBy({ top: step, behavior: 'instant' });
+      }
+    }
     scrollRaf = requestAnimationFrame(scrollTick);
   }
 
@@ -96,16 +149,26 @@
   let connecting = false;
   let sensor = { state: 'idle' };
   let frame = null;
+  let gazeResult = null;
+  let smileDelta = 0;
   let fps = 0, fpsCount = 0, fpsWindowStart = performance.now();
 
   const alive = () => !!chrome.runtime?.id; // false after the extension is reloaded/updated
-  const active = () => alive() && settings.enabled && document.visibilityState === 'visible' &&
-    (settings.likeOnSmile || settings.scrollWithGaze);
+  const siteEnabled = () => !settings.disabledSites.includes(host);
+  // Focus inside an embedded frame (a video player, say) still counts as using this page.
+  const windowFocused = () => document.hasFocus() || document.activeElement?.tagName === 'IFRAME';
+  const wanted = () => alive() && settings.enabled && siteEnabled() &&
+    (settings.scrollWithGaze || (adapter && settings.likeOnSmile));
+  const active = () => wanted() && document.visibilityState === 'visible' && windowFocused();
 
-  function paused() {
+  function pauseReason() {
     const el = document.activeElement;
-    const typing = el && (el.isContentEditable || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
-    return typing || !!document.querySelector('[aria-modal="true"]');
+    if (el && (el.isContentEditable || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) {
+      return 'typing';
+    }
+    if (document.fullscreenElement) return 'fullscreen';
+    if (adapter?.blocked()) return 'dialog';
+    return null;
   }
 
   async function connect() {
@@ -150,7 +213,7 @@
       fpsWindowStart = lastFrameAt;
     }
 
-    if (paused()) {
+    if (pauseReason()) {
       velocity = 0;
       gazeResult = null;
       gaze.reset();
@@ -160,21 +223,22 @@
 
     if (settings.scrollWithGaze || settings.debugGaze) {
       gazeResult = gaze.push(msg, screenToPage);
+      gaze.lastPage = gazeResult.page;
       velocity = settings.scrollWithGaze ? gazeResult.velocity : 0;
       if (velocity) startScrollLoop();
     }
 
     const state = focusedState();
-    if (settings.likeOnSmile && focused && (state === 'baseline' || state === 'watching')) {
+    if (adapter && settings.likeOnSmile && focused && (state === 'baseline' || state === 'watching')) {
       if (velocity) {
-        // Don't judge a tweet while it's moving; take a fresh baseline once scrolling stops.
+        // Don't judge a post while it's moving; take a fresh baseline once scrolling stops.
         smile.reset();
         setState(focused, 'baseline');
       } else {
         const r = smile.push(msg);
         smileDelta = r.delta;
         if (r.phase === 'watching' && state === 'baseline') setState(focused, 'watching');
-        if (r.fired && like(focused)) setState(focused, 'liked');
+        if (r.fired && adapter.like(focused)) setState(focused, 'liked');
       }
     }
     renderHud();
@@ -182,9 +246,8 @@
 
   // ---------- HUD ----------
 
-  let smileDelta = 0;
-  let gazeResult = null;
   const hudHost = document.createElement('div');
+  hudHost.id = 'lazyscroll-hud';
   const shadow = hudHost.attachShadow({ mode: 'open' });
   shadow.innerHTML = `
     <style>
@@ -195,7 +258,7 @@
         box-shadow: 0 2px 10px rgba(0,0,0,.3); }
       .dot { width: 8px; height: 8px; border-radius: 50%; background: #536471; flex: none; }
       .dot.ok { background: #00ba7c; } .dot.warn { background: #f5b301; } .dot.err { background: #f4212e; }
-      .meter { width: 56px; height: 6px; border-radius: 3px; background: #333639; position: relative; overflow: hidden; }
+      .meter { width: 56px; height: 6px; border-radius: 3px; background: #333639; position: relative; overflow: hidden; display: block; }
       .meter i { position: absolute; inset: 0 auto 0 0; background: #f5b301; }
       .meter b { position: absolute; top: 0; bottom: 0; width: 2px; background: #e7e9ea; left: 66.6%; }
       .gaze { width: 6px; height: 22px; border-radius: 3px; background: #333639; position: relative; }
@@ -236,12 +299,13 @@
 
   function drawHud() {
     hudRaf = 0;
-    const show = settings.showHud && alive();
-    if (!show) return hudHost.remove();
+    // Only on pages where LazyScroll is switched on; turning a site off makes it disappear entirely.
+    if (!settings.showHud || !wanted()) return hudHost.remove();
     if (!hudHost.isConnected) document.documentElement.append(hudHost);
 
+    const paused = pauseReason();
     let label = 'LazyScroll', dot = '';
-    if (!settings.enabled) label = 'LazyScroll off';
+    if (!active()) label = 'LazyScroll (window not focused)';
     else if (sensor.state === 'error') {
       dot = 'err';
       label = {
@@ -252,19 +316,19 @@
       }[sensor.code] || 'Face tracking failed: click for details';
     } else if (sensor.state !== 'running') { dot = 'warn'; label = 'Starting camera…'; }
     else if (!frame?.face) { dot = 'warn'; label = 'No face'; }
+    else if (paused) { dot = 'warn'; label = { typing: 'Paused while typing', fullscreen: 'Paused (fullscreen)', dialog: 'Paused' }[paused]; }
     else if (settings.scrollWithGaze && !settings.gazeModel) { dot = 'warn'; label = 'Calibrate to scroll: click'; }
-    else if (paused()) { dot = 'warn'; label = 'Paused'; }
     else { dot = 'ok'; label = velocity > 0 ? 'Scrolling ↓' : velocity < 0 ? 'Scrolling ↑' : focusedState() === 'liked' ? 'Liked' : 'Watching'; }
 
     $('.dot').className = `dot ${dot}`;
     $('.label').textContent = label;
 
-    const tracking = settings.enabled && sensor.state === 'running' && frame?.face;
-    $('.smile').hidden = !(tracking && settings.likeOnSmile);
+    const tracking = active() && sensor.state === 'running' && frame?.face && !paused;
+    $('.smile').hidden = !(tracking && adapter && settings.likeOnSmile && focused);
     $('.meter i').style.width = `${Math.max(0, Math.min(1, smileDelta / (settings.smileThreshold * 1.5))) * 100}%`;
 
     const page = tracking ? gazeResult?.page : null;
-    $('.gaze').hidden = !(tracking && settings.scrollWithGaze && page);
+    $('.gaze').hidden = !(settings.scrollWithGaze && page);
     if (page) {
       const pos = Math.max(-1.2, Math.min(1.2, page.y));
       $('.gaze').style.setProperty('--zone', `${((1.2 - settings.scrollEnter) / 2.4) * 100}%`);
@@ -273,7 +337,7 @@
     }
 
     // Debug: the estimated gaze point, clamped to the window edge when it's off the page.
-    const debug = settings.debugGaze && settings.enabled && !!page;
+    const debug = settings.debugGaze && !!page;
     const dotEl = $('.gdot');
     dotEl.hidden = !debug;
     $('.band.top').hidden = $('.band.bottom').hidden = !debug;
@@ -290,13 +354,17 @@
 
   // ---------- lifecycle ----------
 
+  function refresh() {
+    if (active()) connect(); else disconnect();
+    updateFocus();
+    renderHud();
+  }
+
   function applySettings(next) {
     settings = { ...settings, ...next };
     smile.configure(settings);
     gaze.configure(settings);
-    if (active()) connect(); else disconnect();
-    updateFocus();
-    renderHud();
+    refresh();
   }
 
   lazyScrollSettings().then(applySettings);
@@ -304,5 +372,8 @@
     if (area !== 'local' || !alive()) return;
     applySettings(Object.fromEntries(Object.entries(changes).map(([k, v]) => [k, v.newValue ?? LAZYSCROLL_DEFAULTS[k]])));
   });
-  document.addEventListener('visibilitychange', () => applySettings({}));
+  document.addEventListener('visibilitychange', refresh);
+  // Only track while this window has focus, so it never scrolls a page you aren't using.
+  addEventListener('focus', refresh);
+  addEventListener('blur', () => setTimeout(refresh, 0)); // let activeElement settle (focus may have moved into an iframe)
 })();

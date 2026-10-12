@@ -30,11 +30,6 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 chrome.runtime.onStartup.addListener(refreshBadge);
 chrome.storage.onChanged.addListener(refreshBadge);
 
-chrome.action.onClicked.addListener(async () => {
-  const { enabled } = await lazyScrollSettings();
-  await chrome.storage.local.set({ enabled: !enabled });
-});
-
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.to !== 'background') return;
   if (msg.type === 'ensure-sensor') {

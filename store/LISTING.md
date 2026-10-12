@@ -8,7 +8,7 @@ Everything to paste into the Developer Dashboard. Upload `lazyscroll-<version>.z
 **Name:** LazyScroll
 
 **Summary** (from manifest, ≤132 chars):
-Scroll by looking at the top or bottom of the page, like posts by smiling. Face tracking runs on your device.
+Scroll any page by looking at its top or bottom edge, and like posts on X by smiling. Face tracking runs on your device.
 
 **Category:** Accessibility
 
@@ -16,11 +16,11 @@ Scroll by looking at the top or bottom of the page, like posts by smiling. Face 
 
 **Description:**
 
-> Browse x.com hands-free.
+> Browse hands-free.
 >
-> • Look at the bottom of the page and it scrolls down. Look at the top and it scrolls up. The closer to the
->   edge, the faster.
-> • Smile at a post and it gets liked.
+> • Look at the bottom of any page and it scrolls down. Look at the top and it scrolls up. The closer to the
+>   edge, the faster. Works on regular pages and on apps that scroll an inner panel.
+> • On X, smile at a post and it gets liked.
 >
 > Reading the middle of the page does nothing, and neither does glancing away, at your keyboard, or to the side,
 > so it only moves when you mean it to. A quick 20-second calibration teaches LazyScroll your face and screen.
@@ -30,7 +30,9 @@ Scroll by looking at the top or bottom of the page, like posts by smiling. Face 
 >
 > Features
 > • Calibrated eye tracking with a dead zone, scroll bands and off-screen detection
-> • The post that would be liked is outlined so you always know what a smile will do
+> • Turn it off everywhere or per site from the toolbar
+> • Only tracks the focused window, pauses while you type or watch fullscreen video
+> • On X, the post that would be liked is outlined so you always know what a smile will do
 > • Status pill showing tracking, smile and gaze levels
 > • Debug mode that shows where LazyScroll thinks you're looking
 > • Adjustable sensitivity, scroll speed and delays
@@ -44,21 +46,24 @@ Scroll by looking at the top or bottom of the page, like posts by smiling. Face 
 - Icon: `icons/icon128.png`
 - Small promo tile (440×280): `store/promo-small-440x280.png`
 - Marquee (1400×560, optional): `store/promo-marquee-1400x560.png`
-- Screenshots (1280×800, 1–5): `store/screenshot-setup-1280x800.png`. Add 2–3 real ones from x.com: the
-  outlined post with the status pill, and debug mode with the gaze dot.
+- Screenshots (1280×800, 1–5): `store/screenshot-setup-1280x800.png`. Add 2–3 real ones: a regular page with
+  the status pill and debug gaze dot, and x.com with the outlined post.
 
 ## Privacy practices tab
 
 **Single purpose:**
-Lets the user scroll x.com and like posts hands-free, using on-device webcam tracking of where they look and
-whether they smile.
+Hands-free browsing: scrolls web pages based on where the user looks, using on-device webcam tracking (with
+smile-to-like on X as part of the same hands-free control).
 
 **Permission justifications:**
 - `storage`: saves the user's settings and gaze calibration locally.
 - `offscreen`: runs the webcam and the on-device face-tracking model in an offscreen document, so the camera keeps
   working while the user is on x.com without asking x.com for camera permission.
-- Content script on `x.com` / `twitter.com`: finds the post in the middle of the screen, scrolls the page and
-  clicks the like button when the user smiles.
+- Host permission / content script on all sites (`<all_urls>`): the core feature is scrolling whatever page the
+  user is reading, which requires running on every site. The script only finds the scrollable element and scrolls
+  it; it does not read, store or send page content. On x.com it additionally clicks the like button of the post
+  in the middle of the screen when the user smiles. Users can turn it off per site from the toolbar.
+  (Broad host access means a longer, more detailed review; expect that.)
 
 **Remote code:** No, I am not using remote code. (MediaPipe's JavaScript and WebAssembly are bundled in
 `vendor/`.)
