@@ -10,6 +10,8 @@ No frames are stored or sent anywhere, there's no API key, and there are no netw
 
 ## Install
 
+From the Chrome Web Store once it's published. Until then, or for development:
+
 1. Clone this repo.
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, pick the repo folder.
 3. The setup page opens: allow the camera, then run the 20-second **calibration**. Gaze scrolling stays off until
@@ -75,7 +77,11 @@ offscreen page (src/offscreen.js)          content script on x.com (src/content.
 npm install         # Playwright, only for the e2e test
 npm test            # detector / gaze-model unit tests
 npm run test:e2e    # loads the extension in Chromium with a fake camera and a mock x.com page
+npm run package     # dist/lazyscroll-<version>.zip for the Chrome Web Store
 ```
+
+Publishing: see [`store/LISTING.md`](store/LISTING.md) for the listing text, permission justifications, privacy
+answers and graphics. Bump `version` in `manifest.json` for every upload.
 
 `vendor/mediapipe/` is `@mediapipe/tasks-vision@1.1.0` (SIMD wasm only) and the float16 `face_landmarker.task`
 model, both Apache-2.0, bundled because Manifest V3 doesn't allow remotely loaded code.

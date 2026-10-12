@@ -2,20 +2,45 @@
   "manifest_version": 3,
   "name": "LazyScroll",
   "version": "0.1.0",
-  "description": "Hands-free X: look down or up to scroll, smile to like the tweet you are reading. Face tracking runs entirely on your device.",
+  "description": "Scroll by looking at the top or bottom of the page, like posts by smiling. Face tracking runs on your device.",
   "minimum_chrome_version": "116",
-  "permissions": ["storage", "offscreen"],
-  "background": { "service_worker": "src/background.js" },
-  "action": { "default_title": "LazyScroll: click to turn on/off" },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "offscreen"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "action": {
+    "default_title": "LazyScroll: click to turn on/off",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
   "options_page": "src/welcome.html",
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
   "content_scripts": [
     {
-      "matches": ["https://x.com/*", "https://twitter.com/*"],
-      "js": ["src/shared.js", "src/content.js"],
-      "css": ["src/content.css"],
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "src/shared.js",
+        "src/content.js"
+      ],
+      "css": [
+        "src/content.css"
+      ],
       "run_at": "document_idle"
     }
   ]
