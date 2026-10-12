@@ -8,6 +8,8 @@ Hands-free browsing in Chrome:
 Everything runs on your computer. The webcam feed goes into Google's MediaPipe face tracker inside the extension.
 No frames are stored or sent anywhere, there's no API key, and there are no network requests at all.
 
+<video src="https://github.com/Raimo33/LazyScroll/raw/main/docs/demo.mp4" controls muted width="100%"></video>
+
 ## Install
 
 From the Chrome Web Store once it's published. Until then, or for development:
