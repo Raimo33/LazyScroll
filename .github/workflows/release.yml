@@ -1,39 +1,51 @@
 name: Release
 
-# Push a tag matching the manifest version (e.g. v0.1.0) to build the Chrome Web Store zip
-# and attach it to a GitHub release.
+# Whenever the default branch has a manifest version without a release yet, run the tests, build the
+# Chrome Web Store zip and publish it as release v<version> (the tag is created by the release).
+# To ship: bump "version" in manifest.json and push. Can also be run by hand from the Actions tab.
 on:
   push:
-    tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   release:
+    if: github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Tag must match manifest version
-        run: |
-          v=$(node -p "require('./manifest.json').version")
-          if [ "v$v" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match manifest version v$v"
-            exit 1
-          fi
-      - run: npm test
-      - run: scripts/package.sh
-      - name: Create release
+      - name: Is this version already released?
+        id: version
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          v="v$(node -p "require('./manifest.json').version")"
+          echo "tag=$v" >> "$GITHUB_OUTPUT"
+          if gh release view "$v" >/dev/null 2>&1; then
+            echo "$v is already released; nothing to do."
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.version.outputs.new == 'true'
+        run: npm test
+      - if: steps.version.outputs.new == 'true'
+        run: scripts/package.sh
+      - if: steps.version.outputs.new == 'true'
+        name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
           flags=""
-          case "$GITHUB_REF_NAME" in v0.*) flags="--prerelease" ;; esac
-          gh release create "$GITHUB_REF_NAME" dist/*.zip \
-            --title "LazyScroll $GITHUB_REF_NAME" \
+          case "$TAG" in v0.*) flags="--prerelease" ;; esac
+          gh release create "$TAG" dist/*.zip \
+            --target "$GITHUB_SHA" \
+            --title "LazyScroll $TAG" \
             --generate-notes \
-            --verify-tag \
             $flags
