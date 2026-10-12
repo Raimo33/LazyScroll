@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "AutoLike",
+  "version": "0.1.0",
+  "description": "Likes the tweet you're looking at when your facial expression changes, judged by the OpenAI Decisions API.",
+  "minimum_chrome_version": "116",
+  "permissions": ["storage", "offscreen"],
+  "host_permissions": ["https://api.openai.com/*"],
+  "background": { "service_worker": "src/background.js" },
+  "action": { "default_title": "AutoLike: click to turn on/off" },
+  "options_page": "src/welcome.html",
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["src/shared.js", "src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
