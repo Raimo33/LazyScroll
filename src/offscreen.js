@@ -89,6 +89,7 @@ function summarize(result, t, aspect) {
     t,
     face: true,
     smile: avg2(s.mouthSmileLeft, s.mouthSmileRight),
+    frown: avg2(s.mouthFrownLeft, s.mouthFrownRight),
     blink: avg2(s.eyeBlinkLeft, s.eyeBlinkRight),
     g: {
       irisH: avg2(r.h, l.h),

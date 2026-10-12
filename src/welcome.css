@@ -54,3 +54,4 @@ form { display: grid; gap: 12px; margin-top: 16px; }
 #calib-overlay .band.bottom { bottom: 0; border-top: 1px dashed var(--accent); }
 #calib-dot.offscreen { background: var(--err); }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.bar.frown i { background: #a78bfa; }

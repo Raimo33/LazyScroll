@@ -20,7 +20,7 @@ Scroll any page by looking at its top or bottom edge, and like posts on X by smi
 >
 > • Look at the bottom of any page and it scrolls down. Look at the top and it scrolls up. The closer to the
 >   edge, the faster. Works on regular pages and on apps that scroll an inner panel.
-> • On X, smile at a post and it gets liked.
+> • On X, smile at a post and it gets liked. Make a sad face and it's unliked.
 >
 > Reading the middle of the page does nothing, and neither does glancing away, at your keyboard, or to the side,
 > so it only moves when you mean it to. A quick 20-second calibration teaches LazyScroll your face and screen.

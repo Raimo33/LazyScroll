@@ -21,7 +21,7 @@ accounts. Your camera feed, calibration and settings never leave your computer.
 
 **What it does on web pages.** It runs on every page so it can scroll it: it looks up which element can scroll
 and scrolls it. On x.com it also finds the post in the middle of your screen and clicks its like button when you
-smile. It does not read, collect or transmit page content, browsing history, messages or account data.
+smile (or its unlike button when you make a sad face). It does not read, collect or transmit page content, browsing history, messages or account data.
 
 **Removing your data.** Uninstalling the extension deletes everything it stored. You can also revoke camera access
 at any time in Chrome's site settings for the extension.

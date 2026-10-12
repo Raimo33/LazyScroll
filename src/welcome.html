@@ -22,8 +22,8 @@
 
     <section class="step" id="step-calibrate">
       <h2><span class="num">2</span> Calibrate</h2>
-      <p class="muted">About 20 seconds, full screen. Sit the way you normally browse. Follow the dot with your eyes
-        (9 spots across the screen), then glance at your keyboard, then smile slightly. This teaches LazyScroll how your
+      <p class="muted">About 25 seconds, full screen. Sit the way you normally browse. Follow the dot with your eyes
+        (9 spots across the screen), then glance at your keyboard, smile slightly, and make a sad face. This teaches LazyScroll how your
         eyes map to your screen, where "below the screen" starts, and how big your smile is. Redo it if you move your
         laptop, camera or chair a lot.</p>
       <div class="row">
@@ -40,6 +40,7 @@
 
       <div class="live" id="live">
         <div class="live-row"><span>Smile</span><span class="bar"><i id="live-smile"></i><b id="live-smile-thr"></b></span><span id="live-smile-num" class="num-cell"></span></div>
+        <div class="live-row"><span>Sad 😞</span><span class="bar frown"><i id="live-frown"></i><b id="live-frown-thr"></b></span><span id="live-frown-num" class="num-cell"></span></div>
         <div class="live-row"><span title="Up/down gaze; shaded = scroll bands">Gaze ↕</span><span class="bar gaze"><i id="live-gaze"></i><b class="zone up" id="zone-up"></b><b class="zone down" id="zone-down"></b></span><span id="live-gaze-num" class="num-cell"></span></div>
         <p id="live-status" class="muted small"></p>
       </div>
@@ -48,12 +49,15 @@
         <label class="toggle"><input type="checkbox" name="enabled"> Enabled</label>
         <label class="toggle"><input type="checkbox" name="scrollWithGaze"> Scroll with my eyes</label>
         <label class="toggle"><input type="checkbox" name="likeOnSmile"> Like posts on X when I smile</label>
+        <label class="toggle"><input type="checkbox" name="unlikeOnFrown"> Unlike when I make a sad face 😞</label>
         <label class="toggle"><input type="checkbox" name="showHud"> Show status pill on pages</label>
         <label class="toggle"><input type="checkbox" name="debugGaze"> Debug: show where I'm looking on pages</label>
         <label class="toggle"><input type="checkbox" name="cameraBubble"> Camera bubble on pages <small class="muted">(drag it anywhere; great for demo recordings)</small></label>
 
         <label class="range"><span>Smile sensitivity <small>(lower = slighter smiles count)</small></span>
           <input type="range" name="smileThreshold" min="0.03" max="0.5" step="0.01"><output></output></label>
+        <label class="range"><span>Sad-face sensitivity <small>(lower = slighter frowns count)</small></span>
+          <input type="range" name="frownThreshold" min="0.03" max="0.5" step="0.01"><output></output></label>
         <label class="range"><span>Smile hold <small>ms</small></span>
           <input type="range" name="holdMs" min="0" max="600" step="20"><output></output></label>
         <label class="range"><span>Scroll zone <small>(how far towards the edge you must look)</small></span>

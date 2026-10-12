@@ -63,7 +63,7 @@ async function connectSensor() {
   });
 }
 
-let smileRest = null;
+let smileRest = null, frownRest = null;
 function drawLive() {
   const st = $('#live-status');
   if (sensor.state === 'error') {
@@ -90,6 +90,13 @@ function drawLive() {
   $('#live-smile').style.width = `${Math.min(1, delta / span) * 100}%`;
   $('#live-smile-thr').style.left = `${(settings.smileThreshold / span) * 100}%`;
   $('#live-smile-num').textContent = f ? delta.toFixed(2) : '–';
+
+  if (f) frownRest = frownRest == null ? f.frown : frownRest + 0.02 * (Math.min(f.frown, frownRest + 0.02) - frownRest);
+  const fDelta = f ? Math.max(0, f.frown - frownRest) : 0;
+  const fSpan = settings.frownThreshold * 1.5;
+  $('#live-frown').style.width = `${Math.min(1, fDelta / fSpan) * 100}%`;
+  $('#live-frown-thr').style.left = `${(settings.frownThreshold / fSpan) * 100}%`;
+  $('#live-frown-num').textContent = f ? fDelta.toFixed(2) : '–';
 
   const y = liveGaze.screen?.y;
   const zone = `${((1.2 - settings.scrollEnter) / 2.4) * 100}%`;
@@ -177,11 +184,18 @@ async function calibrate() {
     text.textContent = 'Look at the dot and give a slight, natural smile.';
     const smiling = await collect(900, 1300);
 
+    text.textContent = 'Relax… now make a sad face 😞 (pull the corners of your mouth down).';
+    await collect(900, 0); // let the smile fade first
+    const frowning = await collect(700, 1300);
+
     const model = fitGazeModel(points.map((p) => ({ x: p.x, y: p.y, samples: p.samples.map((f) => f.g) })), keyboard.map((f) => f.g));
-    const smileFit = fitSmileThreshold(points.flatMap((p) => p.samples.map((f) => f.smile)), smiling.map((f) => f.smile));
+    const neutral = points.flatMap((p) => p.samples);
+    const smileFit = fitSmileThreshold(neutral.map((f) => f.smile), smiling.map((f) => f.smile));
+    const frownFit = fitSmileThreshold(neutral.map((f) => f.frown), frowning.map((f) => f.frown));
 
     const update = { gazeModel: model };
     if (smileFit.ok) update.smileThreshold = +smileFit.threshold.toFixed(2);
+    if (frownFit.ok) update.frownThreshold = +frownFit.threshold.toFixed(2);
     await chrome.storage.local.set(update);
 
     const vErr = Math.round(model.rmsY * 50), hErr = Math.round(model.rmsX * 50);
@@ -190,6 +204,8 @@ async function calibrate() {
     notes.push(model.belowLimit ? 'Looking below the screen is recognised.' : 'Couldn\'t tell your keyboard glance apart from the screen\'s bottom edge; using the default margin.');
     if (!smileFit.ok) notes.push('Didn\'t catch a clear smile, so the smile setting is unchanged.');
     else notes.push(`Smile sensitivity set to ${update.smileThreshold}.`);
+    if (!frownFit.ok) notes.push('Didn\'t catch a clear sad face, so that setting is unchanged; try a bigger pout next time.');
+    else notes.push(`Sad-face sensitivity set to ${update.frownThreshold}.`);
     result.textContent = notes.join(' ');
     result.className = vErr > 15 ? 'warn' : 'ok';
     $('#test-btn').hidden = false;

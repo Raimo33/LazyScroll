@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const ctx = vm.createContext({ Math, Object, Array, Number, console });
 vm.runInContext(readFileSync(new URL('../src/shared.js', import.meta.url), 'utf8'), ctx);
-const { SmileDetector, GazeScroller, fitGazeModel, predictGaze, fitSmileThreshold, LAZYSCROLL_DEFAULTS: D } = ctx;
+const { SmileDetector, FrownDetector, GazeScroller, fitGazeModel, predictGaze, fitSmileThreshold, LAZYSCROLL_DEFAULTS: D } = ctx;
 
 // Deterministic noise.
 let seed = 42;
@@ -131,4 +131,31 @@ test('smile threshold calibration', () => {
   assert.equal(fit.ok, true);
   assert.ok(fit.threshold > 0.05 && fit.threshold < 0.32, `${fit.threshold}`);
   assert.equal(fitSmileThreshold(Array(50).fill(0.1), Array(50).fill(0.11)).ok, false);
+});
+
+function frownRun(det, values, t0 = 0) {
+  let r, t = t0;
+  for (const v of values) { r = det.push({ t, face: true, smile: 0.05, frown: v }); t += 33; }
+  return r;
+}
+
+test('sad face fires the frown detector; smiles and noise do not', () => {
+  const det = new FrownDetector(D);
+  frownRun(det, Array(10).fill(0.02));
+  assert.equal(frownRun(det, Array(8).fill(0.3), 330).fired, true);
+
+  const calm = new FrownDetector(D);
+  assert.equal(frownRun(calm, Array.from({ length: 200 }, () => 0.03 + 0.05 * rand())).fired, false);
+
+  // The smile signal doesn't leak into the frown detector.
+  const smiling = new FrownDetector(D);
+  let r, t = 0;
+  for (let i = 0; i < 60; i++) { r = smiling.push({ t, face: true, smile: i < 10 ? 0.05 : 0.7, frown: 0.02 }); t += 33; }
+  assert.equal(r.fired, false);
+});
+
+test('frown and smile thresholds are independent', () => {
+  const det = new FrownDetector({ ...D, smileThreshold: 0.01, frownThreshold: 0.4 });
+  frownRun(det, Array(10).fill(0.02));
+  assert.equal(frownRun(det, Array(10).fill(0.3), 330).fired, false);
 });

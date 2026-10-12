@@ -5,10 +5,11 @@
 
   let settings = { ...LAZYSCROLL_DEFAULTS };
   const smile = new SmileDetector(settings);
+  const frown = new FrownDetector(settings);
   const gaze = new GazeScroller(settings);
   const host = location.hostname;
 
-  // ---------- site adapters (smile → like) ----------
+  // ---------- site adapters (smile → like, sad face → unlike) ----------
   // Scrolling works on every page. Liking needs to know a site's markup, so it only runs where an adapter exists.
 
   const ADAPTERS = [
@@ -22,6 +23,11 @@
         btn?.click();
         return !!btn;
       },
+      unlike: (post) => {
+        const btn = post.querySelector('[data-testid="unlike"]');
+        btn?.click();
+        return !!btn;
+      },
       // X opens photos, the composer, etc. in modal dialogs; don't act behind them.
       blocked: () => !!document.querySelector('[aria-modal="true"]'),
     },
@@ -31,6 +37,7 @@
   // ---------- focused post ----------
 
   let focused = null;
+  let likedAt = -Infinity; // when LazyScroll liked the focused post; a sad face only counts a moment after
 
   const focusedState = () => focused?.dataset.lazyscroll;
 
@@ -52,11 +59,13 @@
   }
 
   function updateFocus() {
-    const next = adapter && active() && settings.likeOnSmile ? pickFocused() : null;
+    const next = adapter && active() && (settings.likeOnSmile || settings.unlikeOnFrown) ? pickFocused() : null;
     if (next === focused) return;
     focused?.removeAttribute('data-lazyscroll');
     focused = next;
+    likedAt = -Infinity;
     smile.reset();
+    frown.reset();
     if (focused) focused.dataset.lazyscroll = adapter.isLiked(focused) ? 'liked' : 'baseline';
   }
 
@@ -151,6 +160,7 @@
   let frame = null;
   let gazeResult = null;
   let smileDelta = 0;
+  let frownDelta = 0;
   let fps = 0, fpsCount = 0, fpsWindowStart = performance.now();
 
   const alive = () => !!chrome.runtime?.id; // false after the extension is reloaded/updated
@@ -197,6 +207,7 @@
     frame = null;
     gazeResult = null;
     smile.reset();
+    frown.reset();
     gaze.reset();
   }
 
@@ -228,6 +239,7 @@
       gazeResult = null;
       gaze.reset();
       smile.reset();
+      frown.reset();
       return renderHud();
     }
 
@@ -239,16 +251,35 @@
     }
 
     const state = focusedState();
-    if (adapter && settings.likeOnSmile && focused && (state === 'baseline' || state === 'watching')) {
+    if (adapter && focused) {
       if (velocity) {
         // Don't judge a post while it's moving; take a fresh baseline once scrolling stops.
         smile.reset();
-        setState(focused, 'baseline');
-      } else {
+        frown.reset();
+        if (state === 'watching') setState(focused, 'baseline');
+      } else if ((state === 'baseline' || state === 'watching') && settings.likeOnSmile) {
         const r = smile.push(msg);
         smileDelta = r.delta;
         if (r.phase === 'watching' && state === 'baseline') setState(focused, 'watching');
-        if (r.fired && adapter.like(focused)) setState(focused, 'liked');
+        if (r.fired && adapter.like(focused)) {
+          setState(focused, 'liked');
+          likedAt = msg.t;
+          frown.reset();
+        }
+      } else if (state === 'liked' && settings.unlikeOnFrown && msg.t - likedAt >= 700) {
+        // Wait a moment after a like so the face relaxing from the smile isn't read as anything.
+        const r = frown.push(msg);
+        frownDelta = r.delta;
+        if (r.fired && adapter.unlike(focused)) {
+          const post = focused;
+          setState(post, 'unliked');
+          smile.reset();
+          frown.reset();
+          // Show red briefly, then start over: a fresh baseline before any new smile counts.
+          setTimeout(() => {
+            if (post === focused && post.dataset.lazyscroll === 'unliked') post.dataset.lazyscroll = 'baseline';
+          }, 800);
+        }
       }
     }
     renderHud();
@@ -270,6 +301,7 @@
       .dot.ok { background: #00ba7c; } .dot.warn { background: #f5b301; } .dot.err { background: #f4212e; }
       .meter { width: 56px; height: 6px; border-radius: 3px; background: #333639; position: relative; overflow: hidden; display: block; }
       .meter i { position: absolute; inset: 0 auto 0 0; background: #f5b301; }
+      .meter.frown i { background: #a78bfa; }
       .meter b { position: absolute; top: 0; bottom: 0; width: 2px; background: #e7e9ea; left: 66.6%; }
       .gaze { width: 6px; height: 22px; border-radius: 3px; background: #333639; position: relative; }
       .gaze::before, .gaze::after { content: ""; position: absolute; left: 0; right: 0; background: rgba(29,155,240,.35); }
@@ -292,6 +324,7 @@
       .bubble.dragging { cursor: grabbing; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
       .bubble.scrolling { border-color: #1d9bf0; box-shadow: 0 0 0 4px rgba(29,155,240,.35), 0 6px 20px rgba(0,0,0,.35); }
       .bubble.liked { border-color: #00ba7c; }
+      .bubble.unliked { border-color: #f4212e; }
       .bubble.noface { border-color: #8b98a5; }
       .bubble img { width: 100%; height: 100%; display: block; pointer-events: none; -webkit-user-drag: none; }
       .bubble .close { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border: 0; border-radius: 50%;
@@ -380,7 +413,7 @@
     if (bubble.hidden && showBubble) placeBubbleFromSettings();
     bubble.hidden = !showBubble;
     if (showBubble) {
-      bubble.className = `bubble${drag ? ' dragging' : ''}${!bubbleFace ? ' noface' : velocity ? ' scrolling' : focusedState() === 'liked' ? ' liked' : ''}`;
+      bubble.className = `bubble${drag ? ' dragging' : ''}${!bubbleFace ? ' noface' : velocity ? ' scrolling' : focusedState() === 'liked' ? ' liked' : focusedState() === 'unliked' ? ' unliked' : ''}`;
     }
 
     const paused = pauseReason();
@@ -398,14 +431,21 @@
     else if (!frame?.face) { dot = 'warn'; label = 'No face'; }
     else if (paused) { dot = 'warn'; label = { typing: 'Paused while typing', fullscreen: 'Paused (fullscreen)', dialog: 'Paused' }[paused]; }
     else if (settings.scrollWithGaze && !settings.gazeModel) { dot = 'warn'; label = 'Calibrate to scroll: click'; }
-    else { dot = 'ok'; label = velocity > 0 ? 'Scrolling ↓' : velocity < 0 ? 'Scrolling ↑' : focusedState() === 'liked' ? 'Liked' : 'Watching'; }
+    else { dot = 'ok'; label = velocity > 0 ? 'Scrolling ↓' : velocity < 0 ? 'Scrolling ↑'
+      : focusedState() === 'liked' ? (settings.unlikeOnFrown ? 'Liked · 😞 to undo' : 'Liked')
+      : focusedState() === 'unliked' ? 'Unliked' : 'Watching'; }
 
     $('.dot').className = `dot ${dot}`;
     $('.label').textContent = label;
 
     const tracking = active() && sensor.state === 'running' && frame?.face && !paused;
-    $('.smile').hidden = !(tracking && adapter && settings.likeOnSmile && focused);
-    $('.meter i').style.width = `${Math.max(0, Math.min(1, smileDelta / (settings.smileThreshold * 1.5))) * 100}%`;
+    // One meter: smile while waiting to like, frown once the post is liked.
+    const frowning = focusedState() === 'liked' && settings.unlikeOnFrown;
+    $('.smile').hidden = !(tracking && adapter && focused && (frowning || settings.likeOnSmile));
+    $('.smile').title = frowning ? 'Sad face vs. threshold (unlike)' : 'Smile vs. threshold (like)';
+    $('.meter').classList.toggle('frown', frowning);
+    const [d, thr] = frowning ? [frownDelta, settings.frownThreshold] : [smileDelta, settings.smileThreshold];
+    $('.meter i').style.width = `${Math.max(0, Math.min(1, d / (thr * 1.5))) * 100}%`;
 
     const page = tracking ? gazeResult?.page : null;
     $('.gaze').hidden = !(settings.scrollWithGaze && page);
@@ -444,6 +484,7 @@
     const bubbleWas = settings.cameraBubble;
     settings = { ...settings, ...next };
     smile.configure(settings);
+    frown.configure(settings);
     gaze.configure(settings);
     if (settings.cameraBubble !== bubbleWas) {
       syncPreview();

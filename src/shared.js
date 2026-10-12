@@ -5,6 +5,7 @@ globalThis.LAZYSCROLL_DEFAULTS = {
   enabled: true,
   disabledSites: [],      // hostnames where LazyScroll stays off
   likeOnSmile: true,      // only on sites with a like adapter (currently X)
+  unlikeOnFrown: true,    // a sad face 😞 on a liked post unlikes it
   scrollWithGaze: true,
   showHud: true,
   debugGaze: false,       // draw the estimated gaze point on the page
@@ -15,6 +16,9 @@ globalThis.LAZYSCROLL_DEFAULTS = {
   smileThreshold: 0.15,   // rise in smile score (0–1) over the per-tweet baseline that counts as a smile
   holdMs: 120,            // smile must stay above the threshold this long (filters single noisy frames)
   baselineMs: 150,        // how long to sample your face when a tweet becomes focused
+
+  // Sad face → unlike
+  frownThreshold: 0.12,   // rise in frown score (mouth corners down) over the baseline that counts as a sad face
 
   // Gaze → scroll (needs calibration)
   gazeModel: null,        // fitted by calibration, see fitGazeModel
@@ -33,20 +37,24 @@ globalThis.lazyScrollSettings = async function () {
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
 
 // A frame from the sensor:
-//   { t, face, smile, blink, g: { irisH, irisV, lid, bsH, bsV, pitch, yaw, tx, ty } }
+//   { t, face, smile, frown, blink, g: { irisH, irisV, lid, bsH, bsV, pitch, yaw, tx, ty } }
 // g holds the raw gaze features; fitGazeModel learns how they map to the screen.
 const GAZE_FEATURES = ['irisH', 'irisV', 'lid', 'bsH', 'bsV', 'pitch', 'yaw', 'tx', 'ty'];
 
-// ---------------------------------------------------------------- smile
+// ---------------------------------------------------------------- expressions
 
-class SmileDetector {
-  constructor(opts) {
+// Fires when one expression score (f[key]) rises above its per-post baseline by `threshold` and holds there.
+class ExpressionDetector {
+  constructor(key, thresholdSetting, opts) {
+    this.key = key;
+    this.thresholdSetting = thresholdSetting;
     this.configure(opts);
     this.reset();
   }
 
-  configure({ smileThreshold, holdMs, baselineMs, driftMs = 6000 }) {
-    Object.assign(this, { smileThreshold, holdMs, baselineMs, driftMs });
+  configure(opts) {
+    const { holdMs, baselineMs, driftMs = 6000 } = opts;
+    Object.assign(this, { threshold: opts[this.thresholdSetting], holdMs, baselineMs, driftMs });
   }
 
   reset() {
@@ -64,7 +72,8 @@ class SmileDetector {
       this.overSince = null;
       return { phase: this.base == null ? 'baseline' : 'watching', delta: 0, fired: false };
     }
-    this.ema = this.ema == null ? f.smile : this.ema + 0.5 * (f.smile - this.ema);
+    const v = f[this.key];
+    this.ema = this.ema == null ? v : this.ema + 0.5 * (v - this.ema);
     const dt = this.lastT == null ? 0 : f.t - this.lastT;
     this.lastT = f.t;
 
@@ -77,15 +86,23 @@ class SmileDetector {
     }
 
     const delta = this.ema - this.base;
-    if (delta >= this.smileThreshold) {
+    if (delta >= this.threshold) {
       this.overSince ??= f.t;
       return { phase: 'watching', delta, fired: f.t - this.overSince >= this.holdMs };
     }
     this.overSince = null;
-    // Let the baseline follow slow changes (relaxing, lighting) so only quick smiles count.
+    // Let the baseline follow slow changes (relaxing, lighting) so only quick expressions count.
     this.base += (this.ema - this.base) * Math.min(1, dt / this.driftMs);
     return { phase: 'watching', delta, fired: false };
   }
+}
+
+class SmileDetector extends ExpressionDetector {
+  constructor(opts) { super('smile', 'smileThreshold', opts); }
+}
+
+class FrownDetector extends ExpressionDetector {
+  constructor(opts) { super('frown', 'frownThreshold', opts); }
 }
 
 // ---------------------------------------------------------------- gaze
@@ -314,5 +331,5 @@ function fitSmileThreshold(neutral, smiling) {
 }
 
 Object.assign(globalThis, {
-  GAZE_FEATURES, SmileDetector, OneEuro, GazeScroller, predictGaze, fitGazeModel, fitSmileThreshold, percentile,
+  GAZE_FEATURES, ExpressionDetector, SmileDetector, FrownDetector, OneEuro, GazeScroller, predictGaze, fitGazeModel, fitSmileThreshold, percentile,
 });

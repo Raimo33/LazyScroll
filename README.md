@@ -3,7 +3,7 @@
 Hands-free browsing in Chrome:
 
 - **Look at the bottom of any page → it scrolls down. Look at the top → it scrolls up.**
-- **On X, smile at a post → it gets liked.**
+- **On X, smile at a post → it gets liked. Make a sad face 😞 → it gets unliked.**
 
 Everything runs on your computer. The webcam feed goes into Google's MediaPipe face tracker inside the extension.
 No frames are stored or sent anywhere, there's no API key, and there are no network requests at all.
@@ -37,7 +37,7 @@ From the Chrome Web Store once it's published. Until then, or for development:
 On X:
 
 - The post that would get liked has a coloured outline: **blue** while LazyScroll reads your resting face,
-  **yellow** while it watches for a smile, **green** once liked. It's the tweet crossing the middle of the screen.
+  **yellow** while it watches for a smile, **green** once liked, **red** briefly when a sad face unlikes it. It's the tweet crossing the middle of the screen.
   Nothing gets liked while the page is scrolling.
 - A smile only counts if it **rises** above your face's resting level on that tweet and holds for ~120 ms, so
   being already amused when a tweet arrives doesn't like it, and one noisy frame doesn't either.

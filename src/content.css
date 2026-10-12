@@ -7,3 +7,4 @@ article[data-lazyscroll] {
 article[data-lazyscroll="baseline"] { --lazyscroll-color: #1d9bf0; }
 article[data-lazyscroll="watching"] { --lazyscroll-color: #f5b301; }
 article[data-lazyscroll="liked"]    { --lazyscroll-color: #00ba7c; }
+article[data-lazyscroll="unliked"]  { --lazyscroll-color: #f4212e; }
