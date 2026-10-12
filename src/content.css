@@ -1,0 +1,9 @@
+article[data-lazyscroll] {
+  outline: 3px solid var(--lazyscroll-color);
+  outline-offset: -3px;
+  border-radius: 12px;
+  transition: outline-color 0.12s;
+}
+article[data-lazyscroll="baseline"] { --lazyscroll-color: #1d9bf0; }
+article[data-lazyscroll="watching"] { --lazyscroll-color: #f5b301; }
+article[data-lazyscroll="liked"]    { --lazyscroll-color: #00ba7c; }

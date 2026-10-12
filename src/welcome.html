@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LazyScroll</title>
+  <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>LazyScroll</h1>
+      <p class="lede">Look down to scroll down, look up to scroll up, smile to like the tweet you're reading.
+        Face tracking runs entirely on this computer; no images leave it.</p>
+    </header>
+
+    <section class="step" id="step-camera">
+      <h2><span class="num">1</span> Camera</h2>
+      <p id="camera-status" class="muted">Checking…</p>
+      <button id="camera-btn" hidden>Allow camera</button>
+    </section>
+
+    <section class="step" id="step-calibrate">
+      <h2><span class="num">2</span> Calibrate</h2>
+      <p class="muted">About 20 seconds, full screen. Sit the way you normally browse. Follow the dot with your eyes
+        (9 spots across the screen), then glance at your keyboard, then smile slightly. This teaches LazyScroll how your
+        eyes map to your screen, where "below the screen" starts, and how big your smile is. Redo it if you move your
+        laptop, camera or chair a lot.</p>
+      <div class="row">
+        <button id="calibrate-btn">Start calibration</button>
+        <button id="test-btn" class="secondary" hidden>Test tracking</button>
+      </div>
+      <p id="calibrate-result" class="muted"></p>
+    </section>
+
+    <section class="step" id="step-settings">
+      <h2><span class="num">3</span> Settings</h2>
+      <p class="muted">Changes apply instantly. Open x.com when you're ready; the toolbar button turns LazyScroll on and off.</p>
+
+      <div class="live" id="live">
+        <div class="live-row"><span>Smile</span><span class="bar"><i id="live-smile"></i><b id="live-smile-thr"></b></span><span id="live-smile-num" class="num-cell"></span></div>
+        <div class="live-row"><span title="Up/down gaze; shaded = scroll bands">Gaze ↕</span><span class="bar gaze"><i id="live-gaze"></i><b class="zone up" id="zone-up"></b><b class="zone down" id="zone-down"></b></span><span id="live-gaze-num" class="num-cell"></span></div>
+        <p id="live-status" class="muted small"></p>
+      </div>
+
+      <form id="settings">
+        <label class="toggle"><input type="checkbox" name="enabled"> Enabled</label>
+        <label class="toggle"><input type="checkbox" name="scrollWithGaze"> Scroll with my eyes</label>
+        <label class="toggle"><input type="checkbox" name="likeOnSmile"> Like when I smile</label>
+        <label class="toggle"><input type="checkbox" name="showHud"> Show status pill on x.com</label>
+        <label class="toggle"><input type="checkbox" name="debugGaze"> Debug: show where I'm looking on x.com</label>
+
+        <label class="range"><span>Smile sensitivity <small>(lower = slighter smiles count)</small></span>
+          <input type="range" name="smileThreshold" min="0.03" max="0.5" step="0.01"><output></output></label>
+        <label class="range"><span>Smile hold <small>ms</small></span>
+          <input type="range" name="holdMs" min="0" max="600" step="20"><output></output></label>
+        <label class="range"><span>Scroll zone <small>(how far towards the edge you must look)</small></span>
+          <input type="range" name="scrollEnter" min="0.3" max="1" step="0.05"><output></output></label>
+        <label class="range"><span>Scroll delay <small>ms</small></span>
+          <input type="range" name="scrollDwellMs" min="0" max="800" step="20"><output></output></label>
+        <label class="range"><span>Off-screen margin <small>(how far past an edge counts as looking away)</small></span>
+          <input type="range" name="offscreenMargin" min="0" max="0.5" step="0.05"><output></output></label>
+        <label class="range"><span>Max scroll speed <small>px/s</small></span>
+          <input type="range" name="scrollMaxSpeed" min="300" max="4000" step="100"><output></output></label>
+
+        <button type="button" id="reset-btn" class="secondary">Reset to defaults</button>
+      </form>
+    </section>
+  </main>
+
+  <div id="calib-overlay" hidden>
+    <div class="band top" hidden></div><div class="band bottom" hidden></div>
+    <div id="calib-dot"></div>
+    <p id="calib-text"></p>
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="welcome.js"></script>
+</body>
+</html>

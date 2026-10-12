@@ -1,14 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "AutoLike",
+  "name": "LazyScroll",
   "version": "0.1.0",
-  "description": "Likes the tweet you're looking at when your facial expression changes, judged by the OpenAI Decisions API.",
+  "description": "Hands-free X: look down or up to scroll, smile to like the tweet you are reading. Face tracking runs entirely on your device.",
   "minimum_chrome_version": "116",
   "permissions": ["storage", "offscreen"],
-  "host_permissions": ["https://api.openai.com/*"],
   "background": { "service_worker": "src/background.js" },
-  "action": { "default_title": "AutoLike: click to turn on/off" },
+  "action": { "default_title": "LazyScroll: click to turn on/off" },
   "options_page": "src/welcome.html",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
   "content_scripts": [
     {
       "matches": ["https://x.com/*", "https://twitter.com/*"],

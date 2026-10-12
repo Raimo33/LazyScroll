@@ -12,16 +12,15 @@ async function ensureOffscreen() {
   creating ??= chrome.offscreen.createDocument({
     url: OFFSCREEN_URL,
     reasons: ['USER_MEDIA'],
-    justification: 'Keeps the webcam open so expression checks start instantly.',
+    justification: 'Runs on-device face tracking from the webcam.',
   }).finally(() => { creating = null; });
   await creating;
 }
 
 async function refreshBadge() {
-  const { enabled, apiKey } = await autolikeSettings();
-  const text = !apiKey ? 'KEY' : enabled ? '' : 'OFF';
-  await chrome.action.setBadgeText({ text });
-  await chrome.action.setBadgeBackgroundColor({ color: apiKey ? '#536471' : '#f4212e' });
+  const { enabled } = await lazyScrollSettings();
+  await chrome.action.setBadgeText({ text: enabled ? '' : 'OFF' });
+  await chrome.action.setBadgeBackgroundColor({ color: '#536471' });
 }
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
@@ -32,15 +31,13 @@ chrome.runtime.onStartup.addListener(refreshBadge);
 chrome.storage.onChanged.addListener(refreshBadge);
 
 chrome.action.onClicked.addListener(async () => {
-  const { apiKey, enabled } = await autolikeSettings();
-  if (!apiKey) return chrome.runtime.openOptionsPage();
+  const { enabled } = await lazyScrollSettings();
   await chrome.storage.local.set({ enabled: !enabled });
 });
 
-// Only the service worker answers these two; everything else goes to the offscreen page.
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.to !== 'background') return;
-  if (msg.type === 'ensure-offscreen') {
+  if (msg.type === 'ensure-sensor') {
     ensureOffscreen().then(() => sendResponse({ ok: true }), (e) => sendResponse({ ok: false, error: String(e) }));
     return true;
   }
