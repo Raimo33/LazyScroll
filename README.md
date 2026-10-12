@@ -80,6 +80,9 @@ npm run test:e2e    # loads the extension in Chromium with a fake camera and a m
 npm run package     # dist/lazyscroll-<version>.zip for the Chrome Web Store
 ```
 
+Releases: bump `version` in `manifest.json`, commit, then push a matching tag (`git tag v0.2.0 && git push origin
+v0.2.0`). The Release workflow runs the tests, builds the zip and attaches it to a GitHub release.
+
 Publishing: see [`store/LISTING.md`](store/LISTING.md) for the listing text, permission justifications, privacy
 answers and graphics. Bump `version` in `manifest.json` for every upload.
 
