@@ -3,20 +3,169 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LazyScroll</title>
-  <meta name="description" content="Scroll any page by looking at its top or bottom edge. Face tracking runs on your device.">
+  <title>LazyScroll: look down, it scrolls</title>
+  <meta name="description" content="A Chrome extension for hands-free browsing. Look at the bottom of any page to scroll down, the top to scroll up. Face tracking runs entirely on your device.">
+  <meta property="og:title" content="LazyScroll: look down, it scrolls">
+  <meta property="og:description" content="Hands-free scrolling with on-device eye tracking. Nothing leaves your computer.">
+  <meta property="og:image" content="https://raimo33.github.io/LazyScroll/img/1-look-down-it-scrolls.webp">
   <link rel="icon" href="icon.png">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="home.css">
 </head>
-<body>
-<main>
-  <header><img src="icon.png" alt=""><a href="./">LazyScroll</a></header>
-  <h1>Look down. It scrolls.</h1>
-  <p>LazyScroll is a Chrome extension for hands-free browsing. Look at the bottom of any page and it scrolls down;
-    look at the top and it scrolls up. On X, smile at a post to like it.</p>
-  <p>Face tracking runs entirely on your computer. Nothing is uploaded, and there's no account or API key.</p>
-  <p><a href="https://github.com/Raimo33/LazyScroll">Source code</a> · <a href="privacy/">Privacy policy</a></p>
-  <footer>Not affiliated with or endorsed by X Corp.</footer>
-</main>
+<body class="home">
+
+<nav>
+  <a class="brand" href="./"><img src="icon.png" alt="">LazyScroll</a>
+  <div class="links">
+    <a href="#how">How it works</a>
+    <a href="#privacy">Privacy</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://github.com/Raimo33/LazyScroll">GitHub</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Chrome extension · free · open source</p>
+    <h1>Look down.<br><span>It scrolls.</span></h1>
+    <p class="lede">LazyScroll reads where you're looking through your webcam. Glance at the bottom of any page and it
+      glides down, glance at the top and it goes back up. On X, smile at a post to like it.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/Raimo33/LazyScroll/releases/latest">Download for Chrome</a>
+      <a class="btn" href="https://github.com/Raimo33/LazyScroll">View source</a>
+    </div>
+    <p class="fine">Chrome Web Store listing coming soon. Works in Chrome, Edge and Brave.</p>
+  </div>
+  <img class="hero-shot" src="img/1-look-down-it-scrolls.webp" width="732" height="632"
+       alt="An article in a browser with shaded scroll bands at the top and bottom, a blue gaze dot in the bottom band and a status pill reading Scrolling down">
+</header>
+
+<section class="strip">
+  <div><strong>0</strong><span>bytes uploaded</span></div>
+  <div><strong>~30</strong><span>checks per second</span></div>
+  <div><strong>20 s</strong><span>one-time setup</span></div>
+  <div><strong>$0</strong><span>no account, no API key</span></div>
+</section>
+
+<section id="how" class="how">
+  <div class="how-copy">
+  <h2>Set up once, then forget the mouse.</h2>
+  <ol class="steps">
+    <li><span>1</span><h3>Allow the camera</h3><p>Video is processed on your computer and thrown away frame by frame.</p></li>
+    <li><span>2</span><h3>Follow the dot</h3><p>A 20-second calibration learns your eyes, your screen, your keyboard and your smile.</p></li>
+    <li><span>3</span><h3>Just read</h3><p>Look at an edge to scroll. Look back at the middle to stop. That's it.</p></li>
+  </ol>
+  </div>
+  <img src="img/4-calibration.webp" width="732" height="632" loading="lazy"
+       alt="Full-screen calibration with a 3 by 3 grid of dots, most already done, and the text Follow the dot with your eyes">
+</section>
+
+<section class="feature">
+  <div class="feature-copy">
+    <p class="eyebrow">Only when you mean it</p>
+    <h2>Read in peace. No accidental scrolls.</h2>
+    <p>The middle of the page is a dead zone, so reading never moves anything. Scrolling only starts after you've
+      looked into the top or bottom band for a moment, and it speeds up the closer you look to the edge.</p>
+    <ul class="ticks">
+      <li>Blinks and quick glances are filtered out</li>
+      <li>Looking at your keyboard, your phone or past the side of the screen does nothing</li>
+      <li>Pauses while you type, watch fullscreen video, or use another app</li>
+    </ul>
+  </div>
+  <img src="img/2-no-accidental-scrolls.webp" width="710" height="570" loading="lazy"
+       alt="Diagram of a screen: scroll-up band at the top, a reading dead zone in the middle, scroll-down band at the bottom, with looking above, below or beside the screen marked as ignored">
+</section>
+
+<section class="sites">
+  <p class="eyebrow">Every website</p>
+  <h2>Works where you read.</h2>
+  <p class="lede">LazyScroll scrolls whatever is under your gaze: the whole page, or a panel inside a web app.</p>
+  <div class="chips"><span>News</span><span>Docs</span><span>Recipes</span><span>Forums</span><span>Inboxes</span><span>Chat apps</span><span>Wikis</span><span>Long reads</span></div>
+  <ul class="ticks inline">
+    <li>Turn it off everywhere, or just for one site</li>
+    <li>Status pill shows what it's doing</li>
+    <li>Debug mode draws where it thinks you're looking</li>
+  </ul>
+</section>
+
+<section class="feature flip">
+  <div class="feature-copy">
+    <p class="eyebrow">Bonus, on X</p>
+    <h2>Smile. It's liked.</h2>
+    <p>The post you're reading gets an outline. Smile at it and LazyScroll taps like for you. It's tuned to your own
+      smile, so a slight one is enough, and being already amused when a post scrolls in doesn't count.</p>
+    <ul class="ticks">
+      <li>Outline shows exactly which post a smile will like</li>
+      <li>Never likes while the page is moving</li>
+      <li>Easy to switch off if you only want scrolling</li>
+    </ul>
+  </div>
+  <img src="img/3-smile-to-like.webp" width="732" height="632" loading="lazy"
+       alt="A social feed with one post outlined in green, its heart filled in, and a status pill reading Liked">
+</section>
+
+<section id="privacy" class="privacy">
+  <h2>Your face never leaves your computer.</h2>
+  <p class="lede">The face tracker (Google's MediaPipe) is bundled inside the extension and runs on your machine.
+    LazyScroll makes no network requests at all.</p>
+  <div class="cards">
+    <div><h3>No uploads</h3><p>No video, images or data are stored or sent anywhere.</p></div>
+    <div><h3>No accounts</h3><p>No sign-up, no API key, no servers, no analytics.</p></div>
+    <div><h3>Camera only when used</h3><p>It runs only while your browser window has focus, then turns off.</p></div>
+    <div><h3>Open source</h3><p>Read every line on <a href="https://github.com/Raimo33/LazyScroll">GitHub</a>.</p></div>
+  </div>
+  <p><a href="privacy/">Read the privacy policy →</a></p>
+</section>
+
+<section id="faq" class="faq">
+  <h2>Questions</h2>
+  <details>
+    <summary>How accurate is it?</summary>
+    <p>It's webcam eye tracking, so think "which part of the screen", not "which word". After calibration it reliably
+      tells reading the middle apart from looking at the top or bottom band, or at your keyboard. Even light on your
+      face and a camera at eye level help the most. The calibration screen tells you how accurate yours is.</p>
+  </details>
+  <details>
+    <summary>Which browsers does it work in?</summary>
+    <p>Chrome, and Chromium browsers like Edge and Brave. Firefox and Safari aren't supported.</p>
+  </details>
+  <details>
+    <summary>How do I install it before the Web Store listing is live?</summary>
+    <p>Download the zip from the <a href="https://github.com/Raimo33/LazyScroll/releases/latest">latest release</a> and
+      unzip it. Open <code>chrome://extensions</code>, turn on Developer mode, click <strong>Load unpacked</strong> and
+      pick the unzipped folder. The setup page opens by itself.</p>
+  </details>
+  <details>
+    <summary>Does it slow my computer down?</summary>
+    <p>Face tracking takes a few milliseconds per frame on the GPU. The camera switches off when the browser window
+      isn't in use, and you can turn LazyScroll off per site.</p>
+  </details>
+  <details>
+    <summary>I moved my laptop and it feels off.</summary>
+    <p>Recalibrate from the toolbar menu (Settings &amp; calibration). It handles normal head movement, but a new
+      desk, chair or camera position needs a fresh 20-second calibration.</p>
+  </details>
+  <details>
+    <summary>Is auto-liking allowed on X?</summary>
+    <p>X's rules discourage automated actions. LazyScroll only likes when you smile, one post at a time, but it's your
+      account; you can turn liking off and keep just the scrolling.</p>
+  </details>
+</section>
+
+<section class="final">
+  <h2>Give your scroll wheel a break.</h2>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/Raimo33/LazyScroll/releases/latest">Download for Chrome</a>
+    <a class="btn" href="https://github.com/Raimo33/LazyScroll">View source</a>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <span>© 2026 LazyScroll</span>
+  <a href="privacy/">Privacy</a>
+  <a href="https://github.com/Raimo33/LazyScroll/issues">Support</a>
+  <span>Not affiliated with or endorsed by X Corp.</span>
+</footer>
+
 </body>
 </html>
