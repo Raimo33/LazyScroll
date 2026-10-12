@@ -1,0 +1,219 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+:root { --accent:#1d9bf0; --ok:#00ba7c; --warn:#f5b301; --err:#f4212e; --ink:#e7e9ea; --mute:#8b98a5; }
+* { box-sizing:border-box; margin:0; }
+body { background:#000; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+.shot { width:1280px; height:800px; position:relative; overflow:hidden; display:flex; align-items:center; gap:56px; padding:0 64px 0 80px;
+  background: radial-gradient(1000px 600px at 85% 20%, rgba(29,155,240,.22), transparent 60%), radial-gradient(800px 500px at 0% 100%, rgba(0,186,124,.12), transparent 60%), linear-gradient(160deg,#0b1220,#0a0f1a); color:var(--ink); }
+.copy { width:400px; flex:none; }
+.eyebrow { display:inline-flex; align-items:center; gap:10px; font-size:14px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin-bottom:22px; }
+.eyebrow img { width:28px; height:28px; border-radius:7px; }
+h1 { font-size:54px; line-height:1.05; letter-spacing:-.025em; font-weight:800; margin-bottom:22px; }
+h1 em { font-style:normal; color:var(--accent); }
+.sub { font-size:20px; line-height:1.5; color:#aab8c2; }
+.points { margin-top:28px; display:grid; gap:12px; font-size:16px; color:#cfd9de; }
+.points div { display:flex; gap:10px; align-items:center; }
+.points b { width:22px; height:22px; border-radius:50%; background:rgba(29,155,240,.18); color:var(--accent); display:grid; place-items:center; font-size:13px; flex:none; }
+
+/* browser mock */
+.win { width:700px; height:600px; flex:none; border-radius:14px; background:#fff; box-shadow:0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.08); overflow:hidden; position:relative; }
+.bar { height:44px; background:#eef1f4; display:flex; align-items:center; gap:8px; padding:0 14px; border-bottom:1px solid #dde3e8; }
+.bar i { width:12px; height:12px; border-radius:50%; background:#ff5f57; } .bar i:nth-child(2){background:#febc2e} .bar i:nth-child(3){background:#28c840}
+.url { margin-left:14px; flex:1; height:26px; border-radius:13px; background:#fff; color:#536471; font-size:13px; display:flex; align-items:center; padding:0 14px; }
+.ext { width:26px; height:26px; border-radius:6px; display:grid; place-items:center; } .ext img { width:18px; }
+.view { position:absolute; top:44px; left:0; right:0; bottom:0; overflow:hidden; color:#0f1419; }
+
+/* article page */
+.article { padding:34px 70px; font-family: Georgia, "DejaVu Serif", serif; }
+.article .kicker { font-family:Inter; font-size:12px; font-weight:700; letter-spacing:.1em; color:#c0392b; text-transform:uppercase; }
+.article h2 { font-size:30px; line-height:1.15; margin:10px 0 8px; }
+.article .by { font-family:Inter; font-size:13px; color:#536471; margin-bottom:18px; }
+.article p { font-size:16px; line-height:1.65; color:#2b3640; margin-bottom:14px; }
+.article .img { height:150px; border-radius:8px; background:linear-gradient(135deg,#9ad0f5,#d7ecfb 50%,#f7d9a8); margin:6px 0 16px; }
+
+/* overlay: bands, dot, pill */
+.band { position:absolute; left:0; right:0; background:rgba(29,155,240,.10); }
+.band.top { top:0; border-bottom:2px dashed rgba(29,155,240,.6); }
+.band.bottom { bottom:0; border-top:2px dashed rgba(29,155,240,.6); }
+.band span { position:absolute; left:14px; font:700 10px Inter; color:#fff; background:#1d9bf0; padding:3px 8px; border-radius:999px; letter-spacing:.06em; text-transform:uppercase; }
+.band.top span { bottom:-10px; } .band.bottom span { top:-10px; }
+.gdot { position:absolute; width:26px; height:26px; margin:-13px 0 0 -13px; border-radius:50%; background:#1d9bf0; box-shadow:0 0 0 8px rgba(29,155,240,.25), 0 0 0 18px rgba(29,155,240,.10); }
+.gdot.idle { background:rgba(139,152,165,.4); border:2px solid #8b98a5; box-shadow:none; }
+.pill { position:absolute; left:14px; bottom:14px; display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:999px; background:rgba(15,20,25,.92); color:#e7e9ea; font:500 13px Inter; box-shadow:0 4px 14px rgba(0,0,0,.3); }
+.pill .d { width:8px; height:8px; border-radius:50%; background:var(--ok); }
+.pill .meter { width:60px; height:6px; border-radius:3px; background:#333639; position:relative; overflow:hidden; }
+.pill .meter i { position:absolute; inset:0 auto 0 0; background:var(--warn); }
+.pill .meter b { position:absolute; top:0; bottom:0; width:2px; left:66%; background:#e7e9ea; }
+.pill .g { width:6px; height:22px; border-radius:3px; background:#333639; position:relative; }
+.pill .g::before,.pill .g::after { content:""; position:absolute; left:0; right:0; height:22%; background:rgba(29,155,240,.4); }
+.pill .g::before { top:0; } .pill .g::after { bottom:0; }
+.pill .g i { position:absolute; left:-2px; width:10px; height:4px; border-radius:2px; background:#1d9bf0; }
+.pill .fps { color:#8b98a5; }
+.arrow { position:absolute; right:22px; bottom:24px; width:46px; height:46px; border-radius:50%; background:#1d9bf0; color:#fff; display:grid; place-items:center; font:700 24px Inter; box-shadow:0 6px 18px rgba(29,155,240,.5); }
+
+/* feed */
+.feed { width:520px; margin:0 auto; border-left:1px solid #eff3f4; border-right:1px solid #eff3f4; min-height:100%; font-family:Inter; }
+.post { padding:16px; border-bottom:1px solid #eff3f4; display:flex; gap:12px; position:relative; }
+.av { width:42px; height:42px; border-radius:50%; flex:none; }
+.post .n { font-weight:700; font-size:15px; } .post .h { color:#536471; font-weight:400; }
+.post .t { font-size:15px; line-height:1.45; margin:4px 0 10px; color:#0f1419; }
+.post .media { height:120px; border-radius:14px; margin-bottom:10px; }
+.acts { display:flex; gap:56px; color:#536471; font-size:13px; }
+.acts span { display:flex; align-items:center; gap:6px; }
+.heart.on { color:#f91880; font-weight:600; }
+.post.focus { outline:3px solid var(--ok); outline-offset:-3px; border-radius:12px; }
+.post.watch { outline:3px solid var(--warn); outline-offset:-3px; border-radius:12px; }
+.tag { position:absolute; right:12px; top:12px; font:700 11px Inter; letter-spacing:.06em; text-transform:uppercase; padding:4px 8px; border-radius:6px; }
+
+/* zones diagram */
+.zones { width:700px; height:600px; position:relative; flex:none; }
+.screen { position:absolute; left:110px; top:110px; width:480px; height:330px; border-radius:16px; background:#111a2b; border:2px solid #2c3a52; overflow:hidden; }
+.screen .z { position:absolute; left:0; right:0; display:grid; place-items:center; font:600 15px Inter; }
+.screen .z small { display:block; font-weight:400; font-size:12px; color:#8b98a5; text-align:center; margin-top:2px; }
+.z.up { top:0; height:20%; background:rgba(29,155,240,.22); color:#7cc4f7; border-bottom:2px dashed rgba(29,155,240,.6); }
+.z.dead { top:20%; height:60%; color:#cfd9de; }
+.z.down { bottom:0; height:20%; background:rgba(29,155,240,.22); color:#7cc4f7; border-top:2px dashed rgba(29,155,240,.6); }
+.stand { position:absolute; left:310px; top:440px; width:80px; height:40px; background:#1a2436; clip-path:polygon(20% 0,80% 0,100% 100%,0 100%); }
+.kbd { position:absolute; left:170px; top:500px; width:360px; height:56px; border-radius:10px; background:#1a2436; border:1px solid #2c3a52; display:grid; place-items:center; color:#8b98a5; font:500 13px Inter; }
+.off { position:absolute; font:600 13px Inter; color:#ff8a93; display:flex; align-items:center; gap:6px; }
+.off::before { content:"✕"; width:22px; height:22px; border-radius:50%; background:rgba(244,33,46,.18); display:grid; place-items:center; font-size:11px; }
+
+/* calibration */
+.cal { background:#000; }
+.cal .dot { position:absolute; width:24px; height:24px; margin:-12px 0 0 -12px; border-radius:50%; background:#1d9bf0; box-shadow:0 0 0 8px rgba(29,155,240,.25); }
+.cal .ghost { position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px; border-radius:50%; border:2px solid #2f3336; }
+.cal .ghost.done { background:#00ba7c; border-color:#00ba7c; }
+.cal p { position:absolute; left:0; right:0; top:58%; text-align:center; color:#e7e9ea; font:600 19px Inter; }
+.cal .steps { position:absolute; left:0; right:0; top:65%; display:flex; justify-content:center; gap:6px; }
+.cal .steps i { width:28px; height:4px; border-radius:2px; background:#2f3336; } .cal .steps i.on { background:#1d9bf0; }
+
+/* privacy */
+.cards { width:700px; flex:none; display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:26px; }
+.card .ic { width:44px; height:44px; border-radius:12px; background:rgba(29,155,240,.15); display:grid; place-items:center; font-size:22px; margin-bottom:16px; }
+.card h3 { font-size:19px; margin-bottom:6px; } .card p { color:#aab8c2; font-size:15px; line-height:1.5; }
+.popup { width:280px; background:#fff; color:#0f1419; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,.5); padding:16px; font:14px Inter; display:grid; gap:12px; }
+.popup h4 { font-size:16px; display:flex; align-items:center; gap:8px; } .popup h4 img { width:20px; }
+.sw { display:flex; justify-content:space-between; align-items:center; }
+.tg { width:38px; height:22px; border-radius:11px; background:#1d9bf0; position:relative; } .tg::after { content:""; position:absolute; right:3px; top:3px; width:16px; height:16px; border-radius:50%; background:#fff; }
+.tg.offt { background:#cfd9de; } .tg.offt::after { right:auto; left:3px; }
+.popup .btn { background:#0f1419; color:#fff; border-radius:999px; text-align:center; padding:8px; font-weight:600; }
+</style></head>
+<body>
+
+<!-- 1: look down, it scrolls -->
+<section class="shot" id="s1">
+  <div class="copy">
+    <div class="eyebrow"><img src="../../icons/icon128.png">LazyScroll</div>
+    <h1>Look down.<br><em>It scrolls.</em></h1>
+    <p class="sub">Glance at the bottom of any page and it glides down. Look at the top and it goes back up. No hands, no mouse.</p>
+    <div class="points"><div><b>✓</b>Works on every website</div><div><b>✓</b>Faster the closer you look to the edge</div><div><b>✓</b>Face tracking runs on your device</div></div>
+  </div>
+  <div class="win">
+    <div class="bar"><i></i><i></i><i></i><div class="url">longreads.example/the-quiet-science-of-attention</div><div class="ext"><img src="../../icons/icon32.png"></div></div>
+    <div class="view">
+      <div class="article" style="padding-top:86px">
+        <div class="kicker">Science</div>
+        <h2>The quiet science of attention: why your eyes move before you do</h2>
+        <div class="by">By Maya Lindqvist · 9 min read</div>
+        <div class="img"></div>
+        <p>Every second, your eyes make three or four rapid jumps called saccades. Between them they rest for a few hundred milliseconds, and that pause is where reading actually happens.</p>
+        <p>Researchers have long known that where we look reveals what we're about to do. A glance toward the bottom of a page is, more often than not, a request for more.</p>
+        <p>That small, unconscious signal turns out to be surprisingly easy to read with an ordinary webcam.</p>
+        <p>When the signal is clear, the page simply follows.</p>
+      </div>
+      <div class="band top" style="height:12%"><span>Scroll up</span></div>
+      <div class="band bottom" style="height:16%"><span>Scroll down</span></div>
+      <div class="gdot" style="left:62%; top:92%"></div>
+      <div class="arrow">↓</div>
+      <div class="pill"><span class="d"></span>Scrolling ↓<span class="g"><i style="top:88%"></i></span><span class="fps">30 fps</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2: zones -->
+<section class="shot" id="s2">
+  <div class="copy">
+    <div class="eyebrow"><img src="../../icons/icon128.png">Only when you mean it</div>
+    <h1>Read in peace.<br><em>No accidental scrolls.</em></h1>
+    <p class="sub">The middle of the page is a dead zone. Glances, blinks and looking away are ignored, so it only moves when you look at an edge on purpose.</p>
+    <div class="points"><div><b>✓</b>Dead zone while you read</div><div><b>✓</b>Ignores your keyboard, phone and side glances</div><div><b>✓</b>Pauses while you type or watch fullscreen</div></div>
+  </div>
+  <div class="zones">
+    <div class="screen">
+      <div class="z up"><div>Scroll up</div></div>
+      <div class="z dead"><div>Reading: nothing happens<small>dead zone</small></div></div>
+      <div class="z down"><div>Scroll down</div></div>
+    </div>
+    <div class="stand"></div>
+    <div class="kbd">keyboard</div>
+    <div class="off" style="left:278px; top:62px">Above the screen: ignored</div>
+    <div class="off" style="left:262px; top:570px">Below the screen: ignored</div>
+    <div class="off" style="left:0; top:262px; flex-direction:column; width:100px; text-align:center">Side<br>glance:<br>ignored</div>
+    <div class="off" style="left:604px; top:262px; flex-direction:column; width:96px; text-align:center">Side<br>glance:<br>ignored</div>
+  </div>
+</section>
+
+<!-- 3: smile to like -->
+<section class="shot" id="s3">
+  <div class="copy">
+    <div class="eyebrow"><img src="../../icons/icon128.png">On X</div>
+    <h1>Smile.<br><em>It's liked.</em></h1>
+    <p class="sub">The post you're reading is outlined. Smile at it and LazyScroll taps like for you. Already grinning when it scrolls in? That doesn't count.</p>
+    <div class="points"><div><b>✓</b>Outline shows exactly which post</div><div><b>✓</b>Tuned to your own smile</div><div><b>✓</b>Never likes while the page is moving</div></div>
+  </div>
+  <div class="win">
+    <div class="bar"><i></i><i></i><i></i><div class="url">x.com/home</div><div class="ext"><img src="../../icons/icon32.png"></div></div>
+    <div class="view" style="background:#fff">
+      <div class="feed">
+        <div class="post"><div class="av" style="background:linear-gradient(135deg,#ffb86b,#ff6b8b)"></div><div style="flex:1"><div class="n">Ana Ruiz <span class="h">@anaruiz · 2h</span></div><div class="t">Finally finished the bookshelf. Only three screws left over, which I'm told is a personal best.</div><div class="acts"><span>💬 12</span><span>🔁 4</span><span class="heart">♡ 88</span></div></div></div>
+        <div class="post focus"><span class="tag" style="background:rgba(0,186,124,.12);color:#00a36d">Liked by smile</span><div class="av" style="background:linear-gradient(135deg,#6be3ff,#4b7bff)"></div><div style="flex:1"><div class="n">Sam Okafor <span class="h">@samokafor · 3h</span></div><div class="t">My cat has learned to open the fridge. I am no longer the one in charge here.</div><div class="media" style="background:linear-gradient(135deg,#f6d365,#fda085)"></div><div class="acts"><span>💬 241</span><span>🔁 1.2K</span><span class="heart on">♥ 9,413</span></div></div></div>
+        <div class="post"><div class="av" style="background:linear-gradient(135deg,#a1ffce,#2bc0a4)"></div><div style="flex:1"><div class="n">Lee Park <span class="h">@leepark · 5h</span></div><div class="t">Hot take: the best part of any trip is the first coffee in a new city.</div><div class="acts"><span>💬 30</span><span>🔁 12</span><span class="heart">♡ 402</span></div></div></div>
+      </div>
+      <div class="pill"><span class="d"></span>Liked<span class="meter"><i style="width:82%"></i><b></b></span><span class="fps">30 fps</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4: calibration -->
+<section class="shot" id="s4">
+  <div class="copy">
+    <div class="eyebrow"><img src="../../icons/icon128.png">20-second setup</div>
+    <h1>Follow the dot.<br><em>That's the setup.</em></h1>
+    <p class="sub">A quick full-screen calibration learns your eyes, your screen and your smile. It even learns where your keyboard is, so looking down to type never scrolls.</p>
+    <div class="points"><div><b>1</b>Allow the camera</div><div><b>2</b>Follow 9 dots, glance at your keyboard, smile</div><div><b>3</b>Browse hands-free</div></div>
+  </div>
+  <div class="win cal" style="background:#000">
+    <div class="view" style="top:0">
+      <div class="ghost done" style="left:5%;top:5%"></div><div class="ghost done" style="left:50%;top:5%"></div><div class="ghost done" style="left:95%;top:5%"></div>
+      <div class="ghost done" style="left:95%;top:50%"></div><div class="ghost done" style="left:50%;top:50%"></div><div class="ghost done" style="left:5%;top:50%"></div>
+      <div class="ghost" style="left:50%;top:95%"></div><div class="ghost" style="left:95%;top:95%"></div>
+      <div class="dot" style="left:5%;top:95%"></div>
+      <p>Follow the dot with your eyes.</p>
+      <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5: privacy + control -->
+<section class="shot" id="s5">
+  <div class="copy">
+    <div class="eyebrow"><img src="../../icons/icon128.png">Private by design</div>
+    <h1>Your face<br><em>never leaves</em><br>your computer.</h1>
+    <p class="sub">Tracking runs inside the extension. No servers, no account, no API key, nothing uploaded. Switch it off everywhere or just for one site, in one click.</p>
+    <div style="margin-top:26px" class="popup">
+      <h4><img src="../../icons/icon32.png">LazyScroll</h4>
+      <div class="sw">On <span class="tg"></span></div>
+      <div class="sw">On mail.example.com <span class="tg offt"></span></div>
+      <div class="btn">Settings &amp; calibration</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="ic">💻</div><h3>Runs on-device</h3><p>The face tracker is bundled in the extension and runs on your machine.</p></div>
+    <div class="card"><div class="ic">🚫</div><h3>Nothing uploaded</h3><p>No video, images or data are stored or sent anywhere. Zero network requests.</p></div>
+    <div class="card"><div class="ic">🎯</div><h3>Only when focused</h3><p>The camera runs only while your browser window is in use, then switches off.</p></div>
+    <div class="card"><div class="ic">🎛️</div><h3>You're in control</h3><p>Per-site switch, sensitivity, scroll speed, and a debug view of where it thinks you look.</p></div>
+  </div>
+</section>
+</body></html>

@@ -46,8 +46,14 @@ Scroll any page by looking at its top or bottom edge, and like posts on X by smi
 - Icon: `icons/icon128.png`
 - Small promo tile (440×280): `store/promo-small-440x280.png`
 - Marquee (1400×560, optional): `store/promo-marquee-1400x560.png`
-- Screenshots (1280×800, 1–5): `store/screenshot-setup-1280x800.png`. Add 2–3 real ones: a regular page with
-  the status pill and debug gaze dot, and x.com with the outlined post.
+- Screenshots (1280×800, 24-bit PNG, upload in this order):
+  1. `store/screenshot-1-look-down-it-scrolls.png`
+  2. `store/screenshot-2-no-accidental-scrolls.png`
+  3. `store/screenshot-3-smile-to-like.png`
+  4. `store/screenshot-4-calibration.png`
+  5. `store/screenshot-5-private-by-design.png`
+
+  They're rendered from `store/src/screenshots.html` (edit it, then screenshot each `<section>` at 1280×800).
 
 ## Privacy practices tab
 
