@@ -6,5 +6,5 @@ version=$(node -p "require('./manifest.json').version")
 out="dist/lazyscroll-$version.zip"
 mkdir -p dist
 rm -f "$out"
-zip -qr -X "$out" manifest.json icons src vendor
+zip -qr -X "$out" manifest.json icons src vendor -x "*.md"
 echo "$out ($(du -h "$out" | cut -f1))"
